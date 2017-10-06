@@ -52,11 +52,17 @@
 */
 
 #ifndef FILE_IO_H
-#define FILE_OI_H
+#define FILE_IO_H
 
 void vDisplayMessage( const char * const pcMessageToPrint );
 void vWriteMessageToDisk( const char * const pcMessage );
 void vWriteBufferToDisk( const char * const pcBuffer, unsigned long ulBufferLength );
+
+//extra functions to pass it a file name
+//Data - pass pointer and a length
+//Message - pointer only
+void vAppendMessageToFile(const char * const pcFileName, const char * const pcBuffer);
+void vAppendDataToFile(const char * const pcFileName, const char * const pcBuffer, unsigned long ulBufferLength );
 
 #endif
 

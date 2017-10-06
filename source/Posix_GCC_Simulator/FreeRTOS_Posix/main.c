@@ -82,7 +82,7 @@
 
 /* System headers. */
 #include <stdio.h>
-#include <time.h>
+#include <time.h>				//already included. for time, date, etc
 #include <sys/time.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -119,6 +119,10 @@
 #include "countsem.h"
 #include "recmutex.h"
 
+
+//access to adc open, close, read, write, etc.
+#include <string.h>
+#include <fcntl.h>		//open, close, read, write O_RDWR
 
 /* Priority definitions for the tasks in the demo application. */
 #define mainLED_TASK_PRIORITY		( tskIDLE_PRIORITY + 1 )
@@ -201,13 +205,58 @@ void vApplicationIdleHook( void )
 //myTask
 void myTask( void *pvParameters )
 {
+	char smBuffer[60];
+	char lgBuffer[120];
+	char adcBuffer[16];
+
+	const char* adcFilePath = "/sys/bus/iio/devices/iio:device0/in_voltage0_raw";
+
+	ssize_t numBytesRead;
+	int n, fp;
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
 	unsigned int counter = 0;
+
 	printf("My Task - Entering loop\n");
 	for ( ;; )
 	{
 		printf("My Task - Running Loop: Counter: %d\n", counter++);
 
-		vTaskDelay(2000);
+		if (!(counter % 10))
+		{
+			//update the time
+			t = time(NULL);
+			tm = *localtime(&t);
+			strftime(smBuffer, sizeof(smBuffer), "%c", &tm);
+
+			vWriteMessageToDisk("MyTask: Time: ");
+			vWriteMessageToDisk((const char*)smBuffer);
+			vWriteMessageToDisk("\n");
+
+			//now, write to a different filename - sd card
+			//path: /media/log.txt
+			n = sprintf(lgBuffer, "SDCard Log Message: Time: %s\n", smBuffer);
+
+			//write the message to the sd card
+			vAppendMessageToFile("/media/log.txt", (const char*)lgBuffer);
+
+
+			//write ADC Channel to adc.txt on sd card
+			memset(adcBuffer, 0x00, 16);
+			fp = open(adcFilePath, O_RDWR);		//open
+			numBytesRead = read(fp, adcBuffer, 16);
+			close(fp);						//close
+
+			//write the value
+			printf("ADC Read Value(%d bytes): %s\n", numBytesRead, adcBuffer);
+
+			//print this to the large buffer and write to sdcard, adc_log.txt
+			n = sprintf(lgBuffer, "ADC Ch0 Read Value: %s\n", adcBuffer);
+			vAppendDataToFile("/media/adc_log.txt", lgBuffer, n);
+
+		}
+
+		vTaskDelay(1000);
 	}
 
 	vTaskDelete( NULL );

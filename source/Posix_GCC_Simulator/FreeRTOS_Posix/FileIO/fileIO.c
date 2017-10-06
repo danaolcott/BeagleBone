@@ -56,13 +56,16 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+
 /* Demo program include files. */
 #include "fileIO.h"
 
 void vDisplayMessage( const char * const pcMessageToPrint )
 {
+
 	vTaskSuspendAll();
 	{
+
 		printf( "%s", pcMessageToPrint );
 		fflush( stdout );
 	}
@@ -72,9 +75,9 @@ void vDisplayMessage( const char * const pcMessageToPrint )
 
 void vWriteMessageToDisk( const char * const pcMessage )
 {
-const portCHAR * const pcFileName = "RTOSlog.txt";
-const portCHAR * const pcSeparator = "\r\n-----------------------\r\n";
-FILE *pf;
+	const portCHAR * const pcFileName = "/media/RTOSlog.txt";
+	const portCHAR * const pcSeparator = "\r\n-----------------------\r\n";
+	FILE *pf;
 
 	vTaskSuspendAll();
 	{
@@ -85,6 +88,10 @@ FILE *pf;
 			fwrite( pcSeparator, strlen( pcSeparator ), ( unsigned portSHORT ) 1, pf );
 			fclose( pf );
 		}
+		else
+		{
+			printf("Error - NULL file ptr\n");
+		}
 	}
 	xTaskResumeAll();
 }
@@ -92,8 +99,8 @@ FILE *pf;
 
 void vWriteBufferToDisk( const char * const pcBuffer, unsigned long ulBufferLength )
 {
-const portCHAR * const pcFileName = "trace.bin";
-FILE *pf;
+	const portCHAR * const pcFileName = "trace.bin";
+	FILE *pf;
 
 	vTaskSuspendAll();
 	{
@@ -107,3 +114,45 @@ FILE *pf;
 	xTaskResumeAll();
 }
 
+///////////////////////////////////////////
+//pass it a file name too
+
+void vAppendMessageToFile(const char * const pcFileName, const char * const pcMessage )
+{
+	FILE *pf;
+
+	vTaskSuspendAll();
+	{
+		pf = fopen( pcFileName, "a" );
+		if( pf != NULL )
+		{
+			fwrite( pcMessage, strlen( pcMessage ), ( unsigned portSHORT ) 1, pf );
+			fclose( pf );
+		}
+		else
+		{
+			printf("Error - NULL file ptr\n");
+		}
+	}
+	xTaskResumeAll();
+}
+
+
+
+
+//pass it a file name too
+void vAppendDataToFile(const char * const pcFileName, const char * const pcBuffer, unsigned long ulBufferLength )
+{
+	FILE *pf;
+
+	vTaskSuspendAll();
+	{
+		pf = fopen( pcFileName, "a" );
+		if( pf != NULL )
+		{
+			fwrite( pcBuffer, ( size_t ) ulBufferLength, ( unsigned portSHORT ) 1, pf );
+			fclose( pf );
+		}
+	}
+	xTaskResumeAll();
+}

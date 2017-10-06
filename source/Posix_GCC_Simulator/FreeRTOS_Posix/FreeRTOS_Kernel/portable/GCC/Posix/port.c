@@ -201,12 +201,12 @@ void vPortStartFirstTask( void )
  */
 portBASE_TYPE xPortStartScheduler( void )
 {
-portBASE_TYPE xResult;
-int iSignal;
-sigset_t xSignals;
-sigset_t xSignalToBlock;
-sigset_t xSignalsBlocked;
-portLONG lIndex;
+	portBASE_TYPE xResult __attribute__((unused));
+	int iSignal;
+	sigset_t xSignals;
+	sigset_t xSignalToBlock;
+	sigset_t xSignalsBlocked;
+	portLONG lIndex;
 
 	/* Establish the signals to block before they are needed. */
 	sigfillset( &xSignalToBlock );
@@ -242,6 +242,8 @@ portLONG lIndex;
 	/* Cleanup the mutexes */
 	xResult = pthread_mutex_destroy( &xSuspendResumeThreadMutex );
 	xResult = pthread_mutex_destroy( &xSingleThreadMutex );
+
+
 	vPortFree( (void *)pxThreads );
 
 	/* Should not get here! */
@@ -252,7 +254,8 @@ portLONG lIndex;
 void vPortEndScheduler( void )
 {
 portBASE_TYPE xNumberOfThreads;
-portBASE_TYPE xResult;
+portBASE_TYPE xResult __attribute__((unused));
+
 	for ( xNumberOfThreads = 0; xNumberOfThreads < MAX_NUMBER_OF_TASKS; xNumberOfThreads++ )
 	{
 		if ( ( pthread_t )NULL != pxThreads[ xNumberOfThreads ].hThread )
@@ -452,7 +455,7 @@ void vPortForciblyEndThread( void *pxTaskToDelete )
 xTaskHandle hTaskToDelete = ( xTaskHandle )pxTaskToDelete;
 pthread_t xTaskToDelete;
 pthread_t xTaskToResume;
-portBASE_TYPE xResult;
+portBASE_TYPE xResult __attribute__((unused));
 
 	if ( 0 == pthread_mutex_lock( &xSingleThreadMutex ) )
 	{
@@ -578,7 +581,7 @@ void prvResumeSignalHandler(int sig)
 
 void prvResumeThread( pthread_t xThreadId )
 {
-portBASE_TYPE xResult;
+	portBASE_TYPE xResult __attribute__((unused));
 	if ( 0 == pthread_mutex_lock( &xSuspendResumeThreadMutex ) )
 	{
 		if ( pthread_self() != xThreadId )
@@ -602,8 +605,8 @@ int iSchedulerPriority;
 	iPolicy = SCHED_FIFO;
 	iResult = pthread_setschedparam( pthread_self(), iPolicy, &iSchedulerPriority );		*/
 
-struct sigaction sigsuspendself, sigresume, sigtick;
-portLONG lIndex;
+	struct sigaction sigsuspendself, sigresume, sigtick;
+	portLONG lIndex;
 
 	pxThreads = ( xThreadState *)pvPortMalloc( sizeof( xThreadState ) * MAX_NUMBER_OF_TASKS );
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
@@ -643,8 +646,8 @@ portLONG lIndex;
 
 pthread_t prvGetThreadHandle( xTaskHandle hTask )
 {
-pthread_t hThread = ( pthread_t )NULL;
-portLONG lIndex;
+	pthread_t hThread = ( pthread_t )NULL;
+	portLONG lIndex;
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
 	{
 		if ( pxThreads[ lIndex ].hTask == hTask )
@@ -659,7 +662,8 @@ portLONG lIndex;
 
 portLONG prvGetFreeThreadState( void )
 {
-portLONG lIndex;
+	portLONG lIndex;
+
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
 	{
 		if ( pxThreads[ lIndex ].hThread == ( pthread_t )NULL )
@@ -681,7 +685,7 @@ portLONG lIndex;
 
 void prvSetTaskCriticalNesting( pthread_t xThreadId, unsigned portBASE_TYPE uxNesting )
 {
-portLONG lIndex;
+	portLONG lIndex;
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
 	{
 		if ( pxThreads[ lIndex ].hThread == xThreadId )
@@ -695,8 +699,8 @@ portLONG lIndex;
 
 unsigned portBASE_TYPE prvGetTaskCriticalNesting( pthread_t xThreadId )
 {
-unsigned portBASE_TYPE uxNesting = 0;
-portLONG lIndex;
+	unsigned portBASE_TYPE uxNesting = 0;
+	portLONG lIndex;
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
 	{
 		if ( pxThreads[ lIndex ].hThread == xThreadId )
@@ -711,7 +715,7 @@ portLONG lIndex;
 
 void prvDeleteThread( void *xThreadId )
 {
-portLONG lIndex;
+	portLONG lIndex;
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
 	{
 		if ( pxThreads[ lIndex ].hThread == ( pthread_t )xThreadId )
@@ -732,7 +736,7 @@ portLONG lIndex;
 
 void vPortAddTaskHandle( void *pxTaskHandle )
 {
-portLONG lIndex;
+	portLONG lIndex;
 
 	pxThreads[ lIndexOfLastAddedTask ].hTask = ( xTaskHandle )pxTaskHandle;
 	for ( lIndex = 0; lIndex < MAX_NUMBER_OF_TASKS; lIndex++ )
@@ -758,17 +762,22 @@ void vPortFindTicksPerSecond( void )
 }
 /*-----------------------------------------------------------*/
 
+//TODO: //	(void)ulTotalTime;
 unsigned long ulPortGetTimerValue( void )
 {
-struct tms xTimes;
-	unsigned long ulTotalTime = times( &xTimes );
+	portBASE_TYPE xResult __attribute__((unused));
+
+	struct tms xTimes;
+	unsigned long ulTotalTime __attribute__((unused));
+
+	ulTotalTime = times( &xTimes );
 	/* Return the application code times.
-	 * The timer only increases when the application code is actually running
-	 * which means that the total execution times should add up to 100%.
-	 */
+	* The timer only increases when the application code is actually running
+	* which means that the total execution times should add up to 100%.
+	*/
 	return ( unsigned long ) xTimes.tms_utime;
 
 	/* Should check ulTotalTime for being clock_t max minus 1. */
-	(void)ulTotalTime;
+//	(void)ulTotalTime;
 }
 /*-----------------------------------------------------------*/
