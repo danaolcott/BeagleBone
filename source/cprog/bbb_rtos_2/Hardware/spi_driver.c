@@ -78,13 +78,6 @@ void spi_init(void)
 	system("config-pin P9.22 spi");
 
 
-	//configure as write only....
-	//TODO:
-	//build up functions for config as write
-	//only, write followed by a read, write
-	//no cs pin... etc.  Seems like all this
-	//takes place in ioctl.
-	//
 	unsigned int fp;
 	uint8_t bits = 8, mode = 0;
 	uint32_t speed = 10000;
@@ -197,21 +190,25 @@ int spi_rx(uint8_t* rxBuffer, uint16_t length)
 //spi_send_receive_array
 //Transmits n bytes from tx bufffer followed by
 //receiving n bytes into the rx buffer
-//use the spi_ioc_transfer struct
-int spi_send_receive_array(int fp, uint8_t* txBuffer, uint8_t* rxBuffer, uint16_t length)
+//use the spi_ioc_transfer struct.
+//CS pin statys low between tx and rx
+//tx and rx num bytes need to be the same
+int spi_send_receive_array(uint8_t* txBuf, uint8_t* rxBuf, uint16_t len)
 {
 	struct spi_ioc_transfer msg[1];
-	int status;
+	int status, fp;
 	memset(msg, 0, sizeof(msg));
 
-	msg[0].tx_buf = (unsigned long)txBuffer;
-	msg[0].rx_buf = (unsigned long)rxBuffer;
-	msg[0].len = length;
+	//open the file
+	fp = open(spiPath, O_RDWR);			//open
+
+	msg[0].tx_buf = (unsigned long)txBuf;
+	msg[0].rx_buf = (unsigned long)rxBuf;
+	msg[0].len = len;
 	msg[0].speed_hz = 10000;
 	msg[0].bits_per_word = 8;
 	msg[0].delay_usecs = 0;
 	msg[0].cs_change = 0;
-
 
 	//send the message
 	status = ioctl(fp, SPI_IOC_MESSAGE(1), msg);
@@ -223,4 +220,49 @@ int spi_send_receive_array(int fp, uint8_t* txBuffer, uint8_t* rxBuffer, uint16_
 
 	return status;
 
+}
+
+//////////////////////////////////////////////////////////
+//SPI tx/rx using variable length buffers
+//CS pin stays low between transmissions
+//uses two spi_ior_transfer msg structs, one
+//for tx, one for rx.
+int spi_tx_rx_variable(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen)
+{
+	struct spi_ioc_transfer msg[2];
+	int status, fp;
+	memset(&msg[0], 0, sizeof(msg[0]));
+	memset(&msg[1], 0, sizeof(msg[1]));
+
+	//open the file
+	fp = open(spiPath, O_RDWR);			//open
+
+	//init the tx struct
+	msg[0].tx_buf = (unsigned long)txBuf;
+	msg[0].rx_buf = (unsigned long)NULL;
+	msg[0].len = txLen;
+	msg[0].speed_hz = 10000;
+	msg[0].bits_per_word = 8;
+	msg[0].delay_usecs = 0;
+	msg[0].cs_change = 0;			//disable cs between transfers = 0
+
+	//init the rx struct
+	msg[1].tx_buf = (unsigned long)NULL;
+	msg[1].rx_buf = (unsigned long)rxBuf;
+	msg[1].len = rxLen;
+	msg[1].speed_hz = 10000;
+	msg[1].bits_per_word = 8;
+	msg[1].delay_usecs = 0;
+	msg[1].cs_change = 0;			//disable cs between transfers = 0
+
+
+	//initiate 2 transfers , msg[0] and msg[1]
+	status = ioctl(fp, SPI_IOC_MESSAGE(2), msg);
+	if (status < 0)
+	{
+		printf("Error - SPI: SPI_IOC_MESSAGE Failed\n");
+		return -1;
+	}
+
+	return status;
 }
