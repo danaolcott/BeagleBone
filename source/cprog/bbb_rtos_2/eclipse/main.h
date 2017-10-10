@@ -11,6 +11,8 @@
 /* System headers. */
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+
 
 #include <time.h>				//already included. for time, date, etc
 #include <sys/time.h>
@@ -36,7 +38,7 @@
 #include "memory.h"			//read/write buffers
 #include "adc_driver.h"		//adc channels
 #include "spi_driver.h"		//spidev 1.0
-
+#include "eeprom_driver.h"	//eeprom ic, uses spi_driver
 //middle
 #include "fileIO.h"
 

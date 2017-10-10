@@ -67,35 +67,25 @@ char* spiPath = "/dev/spidev1.0";
 //configure the pins here.   I tried doing this in
 //the /boot/uEnv.txt file, but nothing seems to work
 //always need to write in the following commands over the cli
-//so just write them here.
+//
 //
 void spi_init(void)
 {
-	//this seems to work well
+	//config via terminal commands
 	system("config-pin P9.17 spi");
 	system("config-pin P9.18 spi");
 	system("config-pin P9.21 spi");
 	system("config-pin P9.22 spi");
 
-
 	unsigned int fp;
 	uint8_t bits = 8, mode = 0;
-	uint32_t speed = 10000;
+	uint32_t speed = SPI_SPEED_HZ;
 
 	fp = open(spiPath, O_RDWR);			//open
 
-	//TODO:
-	//seems like we could get rid of all the rd_mode
-	//read?  or is it input.
-
 	ioctl(fp, SPI_IOC_WR_MODE, &mode);
-	ioctl(fp, SPI_IOC_RD_MODE, &mode);
-
 	ioctl(fp, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	ioctl(fp, SPI_IOC_RD_BITS_PER_WORD, &bits);
-
 	ioctl(fp, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	ioctl(fp, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
 
 	fflush(stdout);
 	close(fp);
@@ -121,10 +111,7 @@ void spi_writeArray(uint8_t* data, uint32_t length)
 	unsigned int fp;
 
 	fp = open(spiPath, O_RDWR);			//open
-
-	//write the data
-	write(fp, data, length);				//write 1 byte
-
+	write(fp, data, length);
 	fflush(stdout);
 	close(fp);
 }
@@ -144,7 +131,12 @@ int spi_tx(uint8_t* txBuffer, uint16_t length)
 	memset(msg, 0, sizeof(msg));
 
 	msg[0].tx_buf = (unsigned long)txBuffer;
+	msg[0].rx_buf = (unsigned long)NULL;
 	msg[0].len = length;
+	msg[0].speed_hz = SPI_SPEED_HZ;
+	msg[0].bits_per_word = 8;
+	msg[0].delay_usecs = 20;
+	msg[0].cs_change = 0;			//disable cs between transfers = 0
 
 	//open the file
 	fp = open(spiPath, O_RDWR);			//open
@@ -156,6 +148,8 @@ int spi_tx(uint8_t* txBuffer, uint16_t length)
 		printf("Error - SPI: SPI_IOC_MESSAGE Failed\n");
 		return -1;
 	}
+
+	close(fp);
 
 	return status;
 }
@@ -169,8 +163,13 @@ int spi_rx(uint8_t* rxBuffer, uint16_t length)
 
 	memset(msg, 0, sizeof(msg));
 
+	msg[0].tx_buf = (unsigned long)NULL;
 	msg[0].rx_buf = (unsigned long)rxBuffer;
 	msg[0].len = length;
+	msg[0].speed_hz = SPI_SPEED_HZ;
+	msg[0].bits_per_word = 8;
+	msg[0].delay_usecs = 20;
+	msg[0].cs_change = 0;			//disable cs between transfers = 0
 
 	//open the file
 	fp = open(spiPath, O_RDWR);			//open
@@ -183,6 +182,8 @@ int spi_rx(uint8_t* rxBuffer, uint16_t length)
 		return -1;
 	}
 
+	close(fp);
+
 	return status;
 }
 
@@ -193,6 +194,8 @@ int spi_rx(uint8_t* rxBuffer, uint16_t length)
 //use the spi_ioc_transfer struct.
 //CS pin statys low between tx and rx
 //tx and rx num bytes need to be the same
+
+//len = total number of bytes written + read back.
 int spi_send_receive_array(uint8_t* txBuf, uint8_t* rxBuf, uint16_t len)
 {
 	struct spi_ioc_transfer msg[1];
@@ -205,9 +208,9 @@ int spi_send_receive_array(uint8_t* txBuf, uint8_t* rxBuf, uint16_t len)
 	msg[0].tx_buf = (unsigned long)txBuf;
 	msg[0].rx_buf = (unsigned long)rxBuf;
 	msg[0].len = len;
-	msg[0].speed_hz = 10000;
+	msg[0].speed_hz = SPI_SPEED_HZ;
 	msg[0].bits_per_word = 8;
-	msg[0].delay_usecs = 0;
+	msg[0].delay_usecs = 20;
 	msg[0].cs_change = 0;
 
 	//send the message
@@ -218,6 +221,8 @@ int spi_send_receive_array(uint8_t* txBuf, uint8_t* rxBuf, uint16_t len)
 		return -1;
 	}
 
+	close(fp);
+
 	return status;
 
 }
@@ -227,10 +232,11 @@ int spi_send_receive_array(uint8_t* txBuf, uint8_t* rxBuf, uint16_t len)
 //CS pin stays low between transmissions
 //uses two spi_ior_transfer msg structs, one
 //for tx, one for rx.
-int spi_tx_rx_variable(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen)
+int spi_tx_rx(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen)
 {
 	struct spi_ioc_transfer msg[2];
 	int status, fp;
+
 	memset(&msg[0], 0, sizeof(msg[0]));
 	memset(&msg[1], 0, sizeof(msg[1]));
 
@@ -241,18 +247,18 @@ int spi_tx_rx_variable(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t 
 	msg[0].tx_buf = (unsigned long)txBuf;
 	msg[0].rx_buf = (unsigned long)NULL;
 	msg[0].len = txLen;
-	msg[0].speed_hz = 10000;
+	msg[0].speed_hz = SPI_SPEED_HZ;
 	msg[0].bits_per_word = 8;
-	msg[0].delay_usecs = 0;
+	msg[0].delay_usecs = 50;
 	msg[0].cs_change = 0;			//disable cs between transfers = 0
 
 	//init the rx struct
 	msg[1].tx_buf = (unsigned long)NULL;
 	msg[1].rx_buf = (unsigned long)rxBuf;
 	msg[1].len = rxLen;
-	msg[1].speed_hz = 10000;
+	msg[1].speed_hz = SPI_SPEED_HZ;
 	msg[1].bits_per_word = 8;
-	msg[1].delay_usecs = 0;
+	msg[1].delay_usecs = 50;
 	msg[1].cs_change = 0;			//disable cs between transfers = 0
 
 
@@ -263,6 +269,8 @@ int spi_tx_rx_variable(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t 
 		printf("Error - SPI: SPI_IOC_MESSAGE Failed\n");
 		return -1;
 	}
+
+	close(fp);
 
 	return status;
 }

@@ -26,13 +26,14 @@ int main( void )
 	memory_init();
 	adc_init();
 	spi_init();				//pins 9-17, 9-18, 9-21, 9-22
+	eeprom_init();
 
 	xTaskHandle myTaskHandle;
 	xTaskCreate( myTask, "MyTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, &myTaskHandle );
 
 	//create the other tasks
-	LedTask_Init();		//start 2 tasks
-	AdcTask_Init();		//start 2 tasks
+	//LedTask_Init();		//start 2 tasks
+//	AdcTask_Init();		//start 2 tasks
 
 
 	/* Create the co-routines that communicate with the tick hook. */
@@ -72,16 +73,30 @@ void vApplicationIdleHook( void )
 
 //////////////////////////////////////////////////
 //myTask
+//eeprom ic driver test.  write values
+//to registers and read them back
+//
+//Testing: enable/disable the WIP, works ok and
+//can read the status back
+//
 void myTask( void *pvParameters )
 {
-	uint8_t data[] = {0xAA, 0xCC};
+	uint8_t readValue;
+	uint16_t address = 0x00;
 
 	printf("My Task - Entering loop\n");
 
+	//run a loop that increments the address and value
 	for ( ;; )
 	{
-		spi_writeArray(data, 2);
+		eeprom_writeData(address, address);
+		readValue = eeprom_readData(address);
+		printf("ReadValue(Add: 0x%02x): 0x%02x\n", address, readValue);
+
+		address++;
+
 		vTaskDelay(200);
+
 	}
 
 	vTaskDelete( NULL );
