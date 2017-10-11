@@ -39,6 +39,8 @@
 #include "adc_driver.h"		//adc channels
 #include "spi_driver.h"		//spidev 1.0
 #include "eeprom_driver.h"	//eeprom ic, uses spi_driver
+#include "button_driver.h"	//button/switch combo
+
 //middle
 #include "fileIO.h"
 

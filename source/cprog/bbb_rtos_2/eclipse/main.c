@@ -27,6 +27,7 @@ int main( void )
 	adc_init();
 	spi_init();				//pins 9-17, 9-18, 9-21, 9-22
 	eeprom_init();
+	button_init();			//button and led combination
 
 	xTaskHandle myTaskHandle;
 	xTaskCreate( myTask, "MyTask", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, &myTaskHandle );
@@ -81,22 +82,23 @@ void vApplicationIdleHook( void )
 //
 void myTask( void *pvParameters )
 {
-	uint8_t readValue;
-	uint16_t address = 0x00;
+	uint16_t presses, state;
 
 	printf("My Task - Entering loop\n");
 
-	//run a loop that increments the address and value
+	//run a loop that toggles the button switch state
+	//and queries the number of button presses
+	//and the state of the led
+
 	for ( ;; )
 	{
-		eeprom_writeData(address, address);
-		readValue = eeprom_readData(address);
-		printf("ReadValue(Add: 0x%02x): 0x%02x\n", address, readValue);
+		button_setState(2);					//toggle
+		presses = button_getNumPresses();	//read
+		state = button_getState();			//read
 
-		address++;
+		printf("NumPresses: %d, SwitchState: %d\n", presses, state);
 
-		vTaskDelay(200);
-
+		vTaskDelay(2000);
 	}
 
 	vTaskDelete( NULL );
