@@ -155,6 +155,38 @@ static struct kobj_attribute state_attribute =
 
 
 
+///////////////////////////////////////
+//irq number attribute
+//irqNumber is already defined, make this
+//a read only attribute.
+static ssize_t irq_show(struct kobject *kobj, struct kobj_attribute *attr,
+         char *buf)
+{
+   return sprintf(buf, "%d\n", irqNumber);
+}
+
+//irq store - called on echo
+//do nothing
+static ssize_t irq_store(struct kobject *kobj, struct kobj_attribute *attr,
+          const char *buf, size_t count)
+{
+   int ret;
+   int temp;
+
+   //store it into dummy space
+   ret = kstrtoint(buf, 10, &temp);
+   if (ret < 0)
+      return ret;
+
+   return count;
+}
+
+//irq attribute
+static struct kobj_attribute irq_attribute =
+   __ATTR(irqNumber, 0664, irq_show, irq_store);
+
+
+
 
 ////////////////////////////////////////////
 //Attribute Group
@@ -164,6 +196,7 @@ static struct kobj_attribute state_attribute =
 static struct attribute *attrs[] = {
    &presses_attribute.attr,
    &state_attribute.attr,
+   &irq_attribute.attr,
    NULL,
 };
 
