@@ -41,30 +41,24 @@ mode flag:
 #include <linux/fs.h>             //file system
 #include <asm/uaccess.h>            //get_fs, set_fs, ...etc - file system
 
-//do work on a timer
-#include <linux/workqueue.h>  //workqueue
-
-
-
-//defines for eeprom read/write
-#define EE_READ      0x03    //read data
-#define EE_WRITE     0x02    //write data
-#define EE_WRDI      0x04    //reset write enable latch
-#define EE_WREN      0x06    //set the write enable latch
-#define EE_RDSR      0x05    //read status reg
-#define EE_WRSR      0x01    //write status reg
-
-
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dana Olcott");
 MODULE_DESCRIPTION("Simple SPI Interface");
 MODULE_VERSION("0.1");
 
+
+
 //magic file path for read/write
 static char* spiPath = "/dev/spidev1.0";
 static struct file *fp;
 
+//chip select - controlled using normal io
+//rather than spi driver.  this is so that 
+//we can do a write followed by a read without
+//toggling cs pin, and use existing file system
+//in /dev/spidev1.0
+//
 static int spi_cs_pin = 5;
 static int spi_cs_high = 1;
 static int spi_cs_low = 0;
@@ -76,49 +70,17 @@ static void file_close(struct file *file);
 static int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
 static int file_write(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
 
+
 //spi functions - these functions will be exported
-void spi_tx(uint8_t* txBuf, uint16_t txLen);
-void spi_tx_rx(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen);
+static void spi_select(void);                                  //cs low
+static void spi_deselect(void);                                //cs high
+static void spi_tx_bytes(uint8_t* txBuf, uint16_t txLen);      //tx without cs control
+static void spi_rx_bytes(uint8_t* rxBuf, uint16_t rxLen);      //rx without cs control
 
-//EEPROM functions
-void eeprom_writeEnable(void);
-void eeprom_writeDisable(void);
-uint8_t eeprom_readStatus(void); 
+//spi functions that include cs control.
+static void spi_tx(uint8_t* txBuf, uint16_t txLen);
+static void spi_tx_rx(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen);
 
-
-///work functions
-///////////////////////////////////////////
-//Workqueue
-//Method of setting up a delay to run a function.
-//note: "my_work" does not need to be declared, it's
-//a name.  you'll get an error if you declare it.
-//
-static void my_work_function(struct work_struct *unused);
-static DECLARE_DELAYED_WORK(my_work, my_work_function);
-
-///////////////////////////////////////////////
-//my_work_function
-//Timeout callback function.  
-//Print a message.
-//Read the status of the 4 user leds
-//Toggle the leds
-//output the values to the terminal
-//
-static void my_work_function(struct work_struct *unused)
-{
-    uint8_t status;
-    //disable the write latch
-    eeprom_writeDisable();
-    status = eeprom_readStatus();
-    printk(KERN_EMERG "Write Disable: 0x%02x\n", status);
-
-    eeprom_writeEnable();
-    status = eeprom_readStatus();
-    printk(KERN_EMERG "Write Enable: 0x%02x\n", status);
-
-    //resched the work to continue the cycle
-    schedule_delayed_work(&my_work, 1*HZ);
-}
 
 
 
@@ -136,20 +98,12 @@ static int __init spi_interface_init(void)
     gpio_direction_output(spi_cs_pin, spi_cs_high);   // ste to output and intial state
     gpio_set_value(spi_cs_pin, spi_cs_high);          // Not required as set by line above (here for reference)
 
-    //start the work timer
-    schedule_delayed_work(&my_work, 1*HZ);
-
     return 0;
 }
 
 static void __exit spi_interface_exit(void)
 {
    printk(KERN_EMERG "spi_interface_exit\n");
-
-   //remove all items associated with the workqueue
-   cancel_delayed_work(&my_work);
-   flush_scheduled_work();
-
 }
 
 
@@ -217,6 +171,43 @@ int file_write(struct file *file, unsigned long long offset, unsigned char *data
 }
 
 
+
+
+
+
+////////////////////////////////////
+//selects the device and opens spidev1.0
+void spi_select(void)
+{
+    gpio_set_value(spi_cs_pin, spi_cs_low);
+    fp = file_open(spiPath, O_RDWR, S_IRWXG);
+}
+
+////////////////////////////////////////
+//close the file and delselect the device
+void spi_deselect(void)
+{
+    file_close(fp);
+    gpio_set_value(spi_cs_pin, spi_cs_high);
+}
+
+void spi_tx_bytes(uint8_t* txBuf, uint16_t txLen)
+{
+    if (fp != NULL)
+        file_write(fp, 0, txBuf, txLen);
+}
+
+void spi_rx_bytes(uint8_t* rxBuf, uint16_t rxLen)
+{
+    if (fp != NULL)
+        file_read(fp, 0, rxBuf, rxLen);
+}
+
+
+
+
+///////////////////////////////////////////
+//SPI Functions - spi_tx
 void spi_tx(uint8_t* txBuf, uint16_t txLen)
 {
     //cs pin
@@ -230,6 +221,8 @@ void spi_tx(uint8_t* txBuf, uint16_t txLen)
     gpio_set_value(spi_cs_pin, spi_cs_high);
 }
 
+///////////////////////////////////////////
+//SPI Functions - spi_tx_rx
 void spi_tx_rx(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen)
 {
     //cs pin
@@ -244,29 +237,17 @@ void spi_tx_rx(uint8_t* txBuf, uint16_t txLen, uint8_t* rxBuf, uint16_t rxLen)
     gpio_set_value(spi_cs_pin, spi_cs_high);
 }
 
-void eeprom_writeEnable()
-{
-    uint8_t txByte = EE_WREN;
-    spi_tx(&txByte, 1);    
-}
 
-void eeprom_writeDisable()
-{
-    uint8_t txByte = EE_WRDI;
-    spi_tx(&txByte, 1);
-}
+/////////////////////////////////////////
+//EXPORT FUNCTIONS
+EXPORT_SYMBOL(spi_select);
+EXPORT_SYMBOL(spi_deselect);
+EXPORT_SYMBOL(spi_tx_bytes);
+EXPORT_SYMBOL(spi_rx_bytes);
+EXPORT_SYMBOL(spi_tx);
+EXPORT_SYMBOL(spi_tx_rx);
 
 
-uint8_t eeprom_readStatus(void)
-{
-    uint8_t tx[] = {EE_RDSR};
-    uint8_t rx[] = {0xFF};
-
-    //send RDSR followed by read 1 byte
-    spi_tx_rx(tx, 1, rx, 1);
-
-    return rx[0];
-}
 
 module_init(spi_interface_init);
 module_exit(spi_interface_exit);
