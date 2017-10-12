@@ -1,12 +1,17 @@
 /*
 Simple Button and LED Toggle Example
-using KObject.
+using kobject.
 
-The purpose of this module is to use /linux/gpio.h
-to toggle an led when a button is pressed.  Pressing
-the button triggers the interrpt that runs a function.
-The number of presses and state of the led are stored
-as attributes to the button kobject.
+The purpose of this module is to utilize kobject and
+attributes to connect a button to an led.  The button
+is on an interrupt.  When the button is pressed the led
+toggles.  The led represents a toggle switch, identified
+by button state.  
+
+Attributes include:
+number of button presses
+switch state - ie, if the led is on or off
+irq - for access from userland.
 
 Pinout:
 LED      - Pin 9-12 (60)
@@ -22,6 +27,7 @@ manual, and kernel.org examples.
 #include <linux/sysfs.h>        //sysfs class
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/stat.h>         //read/write macro defs
 
 #include <linux/gpio.h>         // Required for the GPIO functions
 #include <linux/interrupt.h>    //button handler
@@ -37,10 +43,10 @@ static unsigned int ledState = 0;     //state 0 - off, 1 - on
 
 //Button
 static unsigned int buttonPin = 115;
-static unsigned int irqNumber;
+static unsigned int irq;
 
 //function prototypes - button isr
-static irq_handler_t buttonHandler(unsigned int irq, void *dev_id, struct pt_regs *regs);
+static irq_handler_t buttonHandler(unsigned int irq_number, void *dev_id, struct pt_regs *regs);
 
 
 //////////////////////////////////////
@@ -156,34 +162,39 @@ static struct kobj_attribute state_attribute =
 
 
 ///////////////////////////////////////
-//irq number attribute
-//irqNumber is already defined, make this
-//a read only attribute.
+//irq attribute
+//irq is already defined
+//For readonly attributes, even though this function
+//is not passed into the macro, it still needs to be define
+//or you'll get an error.  The function name needs
+//to be parameter_show, where parameter is the variable name
+//that will show up in the file system
 static ssize_t irq_show(struct kobject *kobj, struct kobj_attribute *attr,
          char *buf)
 {
-   return sprintf(buf, "%d\n", irqNumber);
+   return sprintf(buf, "%d\n", irq);
 }
 
-//irq store - called on echo
-//do nothing
-static ssize_t irq_store(struct kobject *kobj, struct kobj_attribute *attr,
-          const char *buf, size_t count)
-{
-   int ret;
-   int temp;
 
-   //store it into dummy space
-   ret = kstrtoint(buf, 10, &temp);
-   if (ret < 0)
-      return ret;
+//read only macro, pass the name of the attribute
+//only, .... irq
+//Even though the _show function is not passed into the
+//macro, it needs to be defined or you'll get an error
+//
+static struct kobj_attribute irq_attribute = __ATTR_RO(irq);
 
-   return count;
-}
 
-//irq attribute
-static struct kobj_attribute irq_attribute =
-   __ATTR(irqNumber, 0664, irq_show, irq_store);
+//Alternative ways of doing readonly - set the mode to
+//
+//read only - S_IRUGO
+//
+//Using the same macro as read/write, pass NULL
+//for the _store function.  If you call echo # > irq,
+//you'll get a permission denied.  Attribute def
+//looks like this:
+//
+//static struct kobj_attribute irq_attribute =
+//   __ATTR(irq, S_IRUGO, irq_show, NULL);
 
 
 
@@ -236,10 +247,10 @@ static int __init sysfs_button_init(void)
     gpio_export(buttonPin, false);                  //shows up in sys/class/gpio/gpio115
 
     //set up irq and interrupts for the button
-    irqNumber = gpio_to_irq(buttonPin);
+    irq = gpio_to_irq(buttonPin);
 
     //connect the lin to the handler function, set the interrupt trigger source
-    result = request_irq(irqNumber,
+    result = request_irq(irq,
                        (irq_handler_t)buttonHandler,
                        IRQF_TRIGGER_RISING,
                        "button_handler",
@@ -275,7 +286,7 @@ static void __exit sysfs_button_exit(void)
    gpio_free(ledPin);               // Free the LED GPIO
 
    //remove the button
-   free_irq(irqNumber, NULL);
+   free_irq(irq, NULL);
    gpio_unexport(buttonPin);
    gpio_free(buttonPin);
 
@@ -287,7 +298,7 @@ static void __exit sysfs_button_exit(void)
 ////////////////////////////////////////////////////////////////
 //buttonHandler 
 //Function Defintions
-static irq_handler_t buttonHandler(unsigned int irq, void *dev_id, struct pt_regs *regs)
+static irq_handler_t buttonHandler(unsigned int irq_number, void *dev_id, struct pt_regs *regs)
 {
    //print something
    printk(KERN_EMERG "Button Handler!!\n");
