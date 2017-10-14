@@ -2,15 +2,11 @@
 //////////////////////////////////////////////////
 //Linux Kernel Module Programming
 
-Simple Flashing LED Example using SysFS - sysfs_blink
+Simple Flashing LED Example using Linux/gpio.h
 
 The purpose of this module is to use /linux/gpio.h
 to toggle an led.  The led will toggle using a workqueue
 and posting delayed work.
-
-The examples in the sysfs folder follow along with tutorials
-posted at  http://www.derekmolloy.ie/ and use the linux/gpio.h
-functions.  Also info from linux module programming manual
 
 */
 
@@ -68,9 +64,9 @@ static void my_work_function(struct work_struct *unused)
 
 ///////////////////////////////////////////////
 //init function
-static int __init sysfs_blink_init(void)
+static int __init blink2_init(void)
 {
-   printk(KERN_INFO "sysfs_blink_init\n");
+   printk(KERN_INFO "blink2_init\n");
  
    //set up pin 9 - 12 and set the initial state to off
    ledState = 0;
@@ -92,9 +88,9 @@ static int __init sysfs_blink_init(void)
 ///////////////////////////////////////////////
 //cleanup function
 //
-static void __exit sysfs_blink_exit(void)
+static void __exit blink2_exit(void)
 {
-   printk(KERN_INFO "sysfs_blink_exit\n");
+   printk(KERN_INFO "blink2_exit\n");
 
    gpio_set_value(ledPin, 0);              // Turn the LED off, makes it clear the device was unloaded
    gpio_unexport(ledPin);                  // remove ledPin from sys/class/gpio
@@ -105,5 +101,5 @@ static void __exit sysfs_blink_exit(void)
    flush_scheduled_work();
 }
 
-module_init(sysfs_blink_init);
-module_exit(sysfs_blink_exit);
+module_init(blink2_init);
+module_exit(blink2_exit);

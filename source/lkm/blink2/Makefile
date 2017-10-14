@@ -1,4 +1,4 @@
-obj-m:=sysfs_blink.o
+obj-m:=blink2.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

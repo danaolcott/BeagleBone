@@ -29,10 +29,10 @@ EEAUTO - Auto increment (0 or 1)
 #include <linux/sysfs.h>        //sysfs class
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/stat.h>         //read/write macro defs
+#include <linux/stat.h>
 
 
-MODULE_LICENSE("GPL v2");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dana Olcott");
 MODULE_DESCRIPTION("EEPROM Controller Module");
 MODULE_VERSION("0.1");
