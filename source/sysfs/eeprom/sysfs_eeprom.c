@@ -4,19 +4,19 @@ EEPROM Controller Module for the Microchip
 25AA640A/25LC640A Serial EEPROM IC
 
 Attributes
-EEWIP - Write In Progress (0 or 1)
+WIP - Write In Progress (0 or 1)
     - Value from IC and Stored
 
-EEWREN - Write Enable (0 or 1)
+WREN - Write Enable (0 or 1)
     - Value to/from IC and Stored
 
-EEADDRESS - Current Read/Write Address
+ADDR - Current Read/Write Address
     - Value stored locally
 
-EEDATA - Value Stored at the Current Address
+DATA - Value Stored at the Current Address
     - Value to/from IC and Stored
 
-EEAUTO - Auto increment (0 or 1)
+AUTOINC - Auto increment (0 or 1)
     - auto increment the destination address
       on each write or read. 0 - manual,
       1 - auto increment
@@ -82,44 +82,44 @@ static uint8_t eeprom_readData(uint16_t address);
 //var_store function - write / echo > variable
 
 //////////////////////////////////////////////
-//Attribute - EEWIP - Write In Progress
+//Attribute - WIP - Write In Progress
 //0 - Ready, 1 - Write in Progress
 //Read Only
-static int eewip;
+static int wip;
 
-static ssize_t eewip_show(struct kobject *kobj, 
+static ssize_t wip_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 {
 
-    eewip = eeprom_readStatus();
-    eewip &= 0x01;                    //bit 0
+    wip = eeprom_readStatus();
+    wip &= 0x01;                    //bit 0
 
-    return sprintf(buf, "%d\n", eewip);
+    return sprintf(buf, "%d\n", wip);
 }
 
-static struct kobj_attribute eewip_attribute = __ATTR_RO(eewip);
+static struct kobj_attribute wip_attribute = __ATTR_RO(wip);
 
 
 //////////////////////////////////////////////
-//Attribute - EEWREN - Write Enable
+//Attribute - WREN - Write Enable
 //0 - Write Disable, 1 - Write Enable
 //Read/Write
-static int eewren;
+static int wren;
 
 //_show - returns 0 Disable, 1 Enable
-static ssize_t eewren_show(struct kobject *kobj, 
+static ssize_t wren_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 {
     //write enable bit = bit 1
-    eewren = (eeprom_readStatus() >> 1);
-    eewren &= 0x01;
+    wren = (eeprom_readStatus() >> 1);
+    wren &= 0x01;
   
-    return sprintf(buf, "%d\n", eewren);
+    return sprintf(buf, "%d\n", wren);
 }
 
 //_store - Write 0 Disable, 1 Enable.  If 
 //write value out of range, 0 Disable
-static ssize_t eewren_store(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t wren_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int ret, temp;
@@ -131,14 +131,14 @@ static ssize_t eewren_store(struct kobject *kobj, struct kobj_attribute *attr,
     //eval wren,
     if ((!temp) || (temp == 1))
     {
-        eewren = (temp & 0x01);
+        wren = (temp & 0x01);
     }
     else
     {
-        eewren = 0;           //disable write on error
+        wren = 0;           //disable write on error
     }
 
-    if (!eewren)
+    if (!wren)
     {
         eeprom_writeDisable();
     }
@@ -150,32 +150,32 @@ static ssize_t eewren_store(struct kobject *kobj, struct kobj_attribute *attr,
     return count;
 }
 
-//eewren attribute
-static struct kobj_attribute eewren_attribute =
-   __ATTR(eewren, 0664, eewren_show, eewren_store);
+//wren attribute
+static struct kobj_attribute wren_attribute =
+   __ATTR(wren, 0664, wren_show, wren_store);
 
 
 
 
 
 //////////////////////////////////////////////
-//Attribute - EEAUTO
+//Attribute - AUTOINC
 //Auto increment the destination address on 
 //a read or write.  0 - manual, 1 - auto
 //
-static int eeauto;
+static int autoinc;
 
 //_show - returns 0 Manuual, 1 Auto
-static ssize_t eeauto_show(struct kobject *kobj, 
+static ssize_t autoinc_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 {  
-    return sprintf(buf, "%d\n", eeauto);
+    return sprintf(buf, "%d\n", autoinc);
 }
 
 //_store - Write 0 Manual, 1 Auto.  If 
 //write value out of range, 0 Manual
 //
-static ssize_t eeauto_store(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t autoinc_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int ret, temp;
@@ -184,22 +184,22 @@ static ssize_t eeauto_store(struct kobject *kobj, struct kobj_attribute *attr,
     if (ret < 0)
         return ret;
 
-    //eval eeauto,
+    //eval autoinc,
     if ((!temp) || (temp == 1))
     {
-        eeauto = (temp & 0x01);
+        autoinc = (temp & 0x01);
     }
     else
     {
-        eeauto = 0;           //set to manual on error
+        autoinc = 0;           //set to manual on error
     }
 
     return count;
 }
 
-//eeauto attribute
-static struct kobj_attribute eeauto_attribute =
-   __ATTR(eeauto, 0664, eeauto_show, eeauto_store);
+//autoinc attribute
+static struct kobj_attribute autoinc_attribute =
+   __ATTR(autoinc, 0664, autoinc_show, autoinc_store);
 
 
 
@@ -209,25 +209,25 @@ static struct kobj_attribute eeauto_attribute =
 
 
 //////////////////////////////////////////////
-//Attribute - EEADDRESS - Current read/write address
+//Attribute - ADDR - Current read/write address
 //16bit value, entered and displayed as hex value
 //requires leading "0x"
 //Read/Write
-//eeaddress auto increments on a read/write eedata
-//if eeauto attribute is set to 1
+//address auto increments on a read/write eedata
+//if autoinc attribute is set to 1
 //
-static int eeaddress;
+static int addr;
 
 //_show - returns current address as hex
-static ssize_t eeaddress_show(struct kobject *kobj, 
+static ssize_t addr_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 { 
-    return sprintf(buf, "0x%04x\n", eeaddress);
+    return sprintf(buf, "0x%04x\n", addr);
 }
 
 //_store - reads in the value as 16bit hex and
-//stores in eeaddress.
-static ssize_t eeaddress_store(struct kobject *kobj, struct kobj_attribute *attr,
+//stores in address.
+static ssize_t addr_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int ret, temp;
@@ -238,18 +238,18 @@ static ssize_t eeaddress_store(struct kobject *kobj, struct kobj_attribute *attr
         return ret;
 
     if (temp < 0)
-        eeaddress = 0;
+        addr = 0;
     else if (temp > 0xFFFF)
-        eeaddress = 0xFFFF;
+        addr = 0xFFFF;
     else
-        eeaddress = (temp & 0xFFFF);
+        addr = (temp & 0xFFFF);
 
     return count;
 }
 
-//eeaddress attribute
-static struct kobj_attribute eeaddress_attribute =
-   __ATTR(eeaddress, 0664, eeaddress_show, eeaddress_store);
+//address attribute
+static struct kobj_attribute addr_attribute =
+   __ATTR(addr, 0664, addr_show, addr_store);
 
 
 
@@ -258,34 +258,34 @@ static struct kobj_attribute eeaddress_attribute =
 
 
 //////////////////////////////////////////////
-//Attribute - EEDATA - Value stored at the 
+//Attribute - DATA - Value stored at the 
 //current address.  Value is read/written each 
 //show/store event.  Value is also stored locally.
 //
 //Auto increment the eeaddress on a read or
-//write if eeauto attribute is set to 1
+//write if autoinc attribute is set to 1
 //
-static int eedata;
+static int data;
 
 //_show - reads and returns value at
-//address eeaddress. capture bottom 8 bits
+//address address. capture bottom 8 bits
 //
-static ssize_t eedata_show(struct kobject *kobj, 
+static ssize_t data_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 { 
-    eedata = (eeprom_readData(eeaddress) & 0xFF);
+    data = (eeprom_readData(addr) & 0xFF);
 
     //auto increment enabled?
-    if (eeauto == 1)
-        eeaddress++;
+    if (autoinc == 1)
+        addr++;
 
-    return sprintf(buf, "0x%02x\n", eedata);
+    return sprintf(buf, "0x%02x\n", data);
 }
 
 //_store - reads in the value as 8bit hex and
-//stores in eedata.  writes eedata to current
-//value of eeaddress.
-static ssize_t eedata_store(struct kobject *kobj, struct kobj_attribute *attr,
+//stores in eedata.  writes data to current
+//value of address.
+static ssize_t data_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int ret, temp;
@@ -297,25 +297,25 @@ static ssize_t eedata_store(struct kobject *kobj, struct kobj_attribute *attr,
         return ret;
 
     if (temp < 0)
-        eedata = 0;
+        data = 0;
     else if (temp > 0xFF)
-        eedata = 0xFF;
+        data = 0xFF;
     else
-        eedata = (temp & 0xFF);
+        data = (temp & 0xFF);
 
     //write eedata to eeaddress
-    eeprom_writeData(eeaddress, eedata);
+    eeprom_writeData(addr, data);
 
     //auto increment enabled?
-    if (eeauto == 1)
-        eeaddress++;
+    if (autoinc == 1)
+        addr++;
 
     return count;
 }
 
-//eedata attribute
-static struct kobj_attribute eedata_attribute =
-   __ATTR(eedata, 0664, eedata_show, eedata_store);
+//data attribute
+static struct kobj_attribute data_attribute =
+   __ATTR(data, 0664, data_show, data_store);
 
 
 
@@ -330,11 +330,11 @@ static struct kobj_attribute eedata_attribute =
 //one entry for each attribute + NULL
 //
 static struct attribute *attrs[] = {
-   &eewip_attribute.attr,
-   &eewren_attribute.attr,
-   &eeauto_attribute.attr,
-   &eeaddress_attribute.attr,
-   &eedata_attribute.attr,
+   &wip_attribute.attr,
+   &wren_attribute.attr,
+   &autoinc_attribute.attr,
+   &addr_attribute.attr,
+   &data_attribute.attr,
    NULL,
 };
 
@@ -475,7 +475,6 @@ void eeprom_writeData(uint16_t address, uint8_t data)
     {
         status = eeprom_readStatus();
     }
-
 
     //now we can leave
 }
