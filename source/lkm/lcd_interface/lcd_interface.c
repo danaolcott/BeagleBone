@@ -1,8 +1,42 @@
 //////////////////////////////////////////////////////////
 //Loadable Kernel Module Using the BeagleBoneBlack
 //
-//Device Driver File
-//Text LCD Display
+//LCD Interface File for the 4bit WDOGXXXX 3 x 16
+//character display.  The purpose of this module
+//is to configure GPIO pins to run the display
+//and export top level functions to control the display
+//
+//Aside from that, the module does not do anything
+//it is intended to be used with a device driver
+//file, the sysfs, other module-level program
+//
+//	obj-m:=my_lcd_consumer_module.o
+//
+//	KBUILD_EXTRA_SYMBOLS+= /home/debian/lkm/lcd_interface/Module.symvers
+//
+//Make sure these are also declared as extern
+//in the consumer module.
+//
+//EXPORT_SYMBOL(lcd_init);
+//EXPORT_SYMBOL(lcd_reset);
+//EXPORT_SYMBOL(lcd_clear);
+//EXPORT_SYMBOL(lcd_cursorOn);
+//EXPORT_SYMBOL(lcd_cursorOff);
+//EXPORT_SYMBOL(lcd_writeString);
+//EXPORT_SYMBOL(lcd_writeStringBytes);
+//EXPORT_SYMBOL(lcd_setContrast);
+//
+//Exported Functions:
+//
+//lcd_init()
+//lcd_reset()
+//lcd_clear()
+//lcd_cursorOn()
+//lcd_cursorOff()
+//lcd_writeString(buf, line, offset)
+//lcd_writeStringBytes(buf, length, line, offset)
+//lcd_setContrast()
+//
 //EA Displays
 //4bit parallel display
 //Data Lines: GPIO 66, 67, 68, 69
@@ -26,9 +60,7 @@
 #include <linux/kernel.h>	//required for any module
 #include <linux/io.h>		//access to hardware registers
 
-#include <linux/kthread.h>    //threads
 #include <linux/delay.h>      //sleep command
-
 
 
 //////////////////////////////////////////
@@ -105,7 +137,7 @@ void __iomem* ioClear_data_Reg;		//write - clear
 //Module Information
 MODULE_LICENSE("GPL");		//has to be GPL or else GPL-only error
 MODULE_AUTHOR("Dana Olcott");
-MODULE_DESCRIPTION("WDOG 3 Line Display");
+MODULE_DESCRIPTION("EADOGM163LA 3Line Character Display Interface");
 MODULE_VERSION("0.1");
 
 //line control
@@ -122,75 +154,16 @@ static void lcd_reset(void);				//pulse RESET line
 //write command/data
 static void lcd_writeCommand(uint8_t cmd);
 static void lcd_writeData(uint8_t data);
+static void lcd_setPosition(uint8_t, uint8_t);		//line and offset
 
-
-//next level up, init, write string, etc
+//exported functions
 static void lcd_init(void);
 static void lcd_clear(void);
 static void lcd_cursorOn(void);
 static void lcd_cursorOff(void);
-
-static void lcd_setPosition(uint8_t, uint8_t);		//line and offset
 static void lcd_writeString(char* buffer, uint8_t line, uint8_t offset);
 static void lcd_writeStringBytes(char* buffer, uint8_t length, uint8_t line, uint8_t offset);
 static void lcd_setContrast(uint8_t);
-
-
-
-
-
-//task for toggle pins
-static unsigned int toggleValue = 0;
-
-static struct task_struct *toggleTask;     //changes a value
-
-static int toggleTaskFunction(void *arg)
-{
-	char buffer[16];
-	int length;
-	static int counter = 0x00;
-
-	while(!kthread_should_stop())
-	{
-		//similar to an "enter task critical?"  
-		set_current_state(TASK_RUNNING);          //set to running
-
-		if (!toggleValue)
-		{
-			lcd_cursorOff();
-			lcd_clear();
-			length = sprintf(buffer, "Count:    %-4d", counter);
-			lcd_writeStringBytes(buffer, length, 0, 0);
-			lcd_writeString("Hello 1", 1, 2);
-			lcd_writeString("Hello 2", 2, 4);
-
-
-			toggleValue = 1;
-			counter++;
-		}
-
-		else
-		{
-			//do something else
-			lcd_cursorOn();
-			lcd_clear();
-			
-			lcd_writeString("Goodby 0", 0, 6);
-			lcd_writeString("Goodby 1", 1, 4);
-			lcd_writeString("Goodby 2", 2, 2);
-
-			toggleValue = 0;
-		}
-
-		set_current_state(TASK_INTERRUPTIBLE); //set to interruptable
-		msleep(1000);                           //sleep 
-	}
-
-	return 0;
-}
-
-//write data/command
-
 
 /////////////////////////////////////////////
 //lcd_interface_init()
@@ -200,8 +173,12 @@ static int __init lcd_interface_init(void)
 	printk(KERN_EMERG "lcd_interface_init()\n");
 	lcd_pinConfig();	
 	lcd_init();
-
-	toggleTask = kthread_run(toggleTaskFunction, NULL, "Toggle_Task");
+	lcd_cursorOn();
+	lcd_cursorOff();
+	lcd_clear();
+	lcd_writeString("LCD_INIT...", 0, 0);
+	lcd_writeString("Waiting...", 1, 2);
+	lcd_writeString("Waiting...", 2, 4);
 
 	return 0;
 }
@@ -213,17 +190,16 @@ static void __exit lcd_interface_exit(void)
 {
 	printk(KERN_EMERG "lcd_interface_exit()\n");
 
-	//stop the task
-	kthread_stop(toggleTask);
-
 	//restore pins to default states
 	lcd_pinUnConfig();
 }
 
 
 
-
-//config pins
+/////////////////////////////////////
+//Configure data and control lines
+//as output and set initial values
+//
 void lcd_pinConfig(void)
 {
 	int oeDataValue, oeControlValue;
@@ -270,6 +246,10 @@ void lcd_pinConfig(void)
 
 }
 
+
+////////////////////////////////////////
+//Configure pins to default input state
+//
 void lcd_pinUnConfig(void)
 {
 	int oeDataValue, oeControlValue;
@@ -298,9 +278,11 @@ void lcd_pinUnConfig(void)
 
 }
 
-/////////////////////////////////////
-//Use the lower 4 bits, writing to D0,
-//D1, D2, and D3
+/////////////////////////////////////////////
+//Set Data Lines
+//Set D0-D3 to the lower 4 bits in data writing
+//to the appropriate set/clear registers
+//
 void lcd_setDataLines(uint8_t data)
 {
 	uint8_t bit0, bit1, bit2, bit3;
@@ -373,9 +355,11 @@ void lcd_reset(void)
 }
 
 
-//write command
-//write enable, command enable
-//load high, pulse e, load low, pulse e
+////////////////////////////////////////
+//Write Command
+//RW = 0, RS = 0, Set high 4 bits, pulse
+//E, set low 4 bits, pulse E
+//
 void lcd_writeCommand(uint8_t cmd)
 {
 	lcd_writeEnable();
@@ -388,6 +372,11 @@ void lcd_writeCommand(uint8_t cmd)
 
 }
 
+////////////////////////////////////////
+//Write Data
+//RW = 0, RS = 1, Set high 4 bits, pulse
+//E, set low 4 bits, pulse E
+//
 void lcd_writeData(uint8_t data)
 {
 	lcd_writeEnable();
@@ -400,17 +389,22 @@ void lcd_writeData(uint8_t data)
 }
 
 
+//////////////////////////////////////
+//LCD init 
+//Reset the LCD, configure in 4 bit mode,
+//and configure the maining registers.  
+//Putting this in 4 bit mode is a bit goofy...
+//
 void lcd_init(void)
 {
 	lcd_reset();		//reset
 
-	//lcd init - set to 4 bit mode.  3 pulses of 
-	//of the e pin.  First one is interpreted in 
-	//8 bit mode, setting it to 4 bit mode.  Second
-	//two are interpreted as 4 bit mode, setting it to 4 bit mode
-	//ie, we have an odd number of pulses since the first is
-	//8 bit and second 2 are 4 bit
-
+	//lcd init - set to 4 bit mode.  Set data
+	// lines to 0x02 and make 3 pulses of the 
+	//E pin.  First is interpreted in, setting it
+	//to 4 bit mode.  Second two are interpreted
+	//as 4 bit mode, setting it to 4 bit mode
+	//
 	//set data lines - 0x02
 	lcd_setDataLines(0x02);
 	msleep(5);
@@ -444,10 +438,8 @@ void lcd_init(void)
 
 	msleep(10);
 
-	//Setup the LCD based on table in the datasheet.  Note
-	//change in the funtion register 4 bit vs 8 bit.  Can't
-	//figure out how to get the contrast set all the way
-	//down.
+	//Setup the LCD based on table in the datasheet.
+	//
 	lcd_writeCommand(0x29);	//4 bit mode, 2 lines, instruction table 1
 	lcd_writeCommand(0x15);	//BS 1/5 3 line LCD
 	lcd_writeCommand(0x54);	//booster on, contrast bits C5 and C4 low
@@ -480,11 +472,11 @@ void lcd_cursorOff(void)
 
 
 
-//////////////////////////////////
+////////////////////////////////////////
 //Set the cursor position as a function
-//of line and offset.  Similar to lcd_setLine
-//but with or'd offset
-//line = 0, 1, 2...  offset = 0 to 15
+//of line and offset.  Acceptible values
+//line = 0 -2 , offset 0 - 15
+//
 void lcd_setPosition(uint8_t line, uint8_t offset)
 {
 	uint8_t address = 0x80;
@@ -501,13 +493,10 @@ void lcd_setPosition(uint8_t line, uint8_t offset)
 	}
 }
 
-/////////////////////////////////
-//Write string to the current line
-//and offset.  Buffer should be null
-//terminated
-//for now, assume string starts at the
-//x = 0, no wrapping
-
+//////////////////////////////////////
+//Write null-terminated string to line
+//and offset.  
+//
 void lcd_writeString(char* buffer, uint8_t line, uint8_t offset)
 {
 	int i = 0;
@@ -525,9 +514,8 @@ void lcd_writeString(char* buffer, uint8_t line, uint8_t offset)
 }
 
 ///////////////////////////////////////
-//write string to current line and offset
-//buffer and length
-
+//Wring string to line and offset.
+//
 void lcd_writeStringBytes(char* buffer, uint8_t len, uint8_t line, uint8_t offset)
 {
 	int i = 0;
@@ -546,6 +534,7 @@ void lcd_writeStringBytes(char* buffer, uint8_t len, uint8_t line, uint8_t offse
 
 /////////////////////////////////////
 //Set Contrast - 0 to 15
+//Default = 11
 void lcd_setContrast(uint8_t contrast)
 {
 	//contrast base = 0x70
@@ -564,5 +553,28 @@ void lcd_setContrast(uint8_t contrast)
 
 
 
+/////////////////////////////////////////////
+//Exported Symbols
+//To use these, include the following line
+//in the make file for who ever uses them:
+//obj-m:=my_lcd_consumer_module.o
+//
+//KBUILD_EXTRA_SYMBOLS+= /home/debian/lkm/lcd_interface/Module.symvers
+//
+//Make sure these are also declared as extern
+//in the consumer module.
+//
+EXPORT_SYMBOL(lcd_init);
+EXPORT_SYMBOL(lcd_reset);
+EXPORT_SYMBOL(lcd_clear);
+EXPORT_SYMBOL(lcd_cursorOn);
+EXPORT_SYMBOL(lcd_cursorOff);
+EXPORT_SYMBOL(lcd_writeString);
+EXPORT_SYMBOL(lcd_writeStringBytes);
+EXPORT_SYMBOL(lcd_setContrast);
+
+
 module_init(lcd_interface_init);
 module_exit(lcd_interface_exit);
+
+
