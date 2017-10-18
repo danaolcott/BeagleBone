@@ -76,6 +76,7 @@ static char line2[LCD_LINE_WIDTH];
 static int cursor;                  //0 off, 1 on
 static int contrast;                //0 to 15
 
+
 ///////////////////////////////////////////
 //Attribute line0 - show
 //Return text string on line0
@@ -115,7 +116,6 @@ static ssize_t line0_store(struct kobject *kobj, struct kobj_attribute *attr,
 
     return count;
 }
-
 
 
 ///////////////////////////////////////////
@@ -159,8 +159,6 @@ static ssize_t line1_store(struct kobject *kobj, struct kobj_attribute *attr,
 }
 
 
-
-
 ///////////////////////////////////////////
 //Attribute line2 - show
 //Return text string on line2
@@ -170,6 +168,7 @@ static ssize_t line2_show(struct kobject *kobj,
 { 
     return sprintf(buf, ">%s<\n", line2);
 }
+
 
 ///////////////////////////////////////////
 //Attribute line2 - store 
@@ -200,15 +199,6 @@ static ssize_t line2_store(struct kobject *kobj, struct kobj_attribute *attr,
 
     return count;
 }
-
-
-
-
-
-
-
-
-
 
 
 //////////////////////////////////////////////
@@ -251,10 +241,6 @@ static ssize_t cursor_store(struct kobject *kobj, struct kobj_attribute *attr,
 }
 
 
-
-
-
-
 //////////////////////////////////////////////
 //Attribute - contrast
 //0 to 15 or default
@@ -292,12 +278,6 @@ static ssize_t contrast_store(struct kobject *kobj, struct kobj_attribute *attr,
 }
 
 
-
-
-
-
-
-
 /////////////////////////////////////////////
 //Attribute Definitions
 //
@@ -315,8 +295,6 @@ static struct kobj_attribute cursor_attribute =
 
 static struct kobj_attribute contrast_attribute =
    __ATTR(contrast, 0664, contrast_show, contrast_store);
-
-
 
 
 ////////////////////////////////////////////
@@ -349,7 +327,11 @@ static struct attribute_group attr_group = {
 static struct kobject *lcd_kobj;
 
 
-
+///////////////////////////////////////
+//sysfs_lcd_init()
+//Write opening message to lcd and
+//create the kobject files.
+//
 static int __init sysfs_lcd_init(void)
 {
     int retval;
@@ -390,7 +372,10 @@ static int __init sysfs_lcd_init(void)
 
 
 ////////////////////////////////////////////
-//Goodby message and restore to default values
+//sysfs_lcd_exit()
+//Print closing message to lcd and
+//destroy the kobject files
+//
 static void __exit sysfs_lcd_exit(void)
 {
     int a, b, c;
@@ -412,9 +397,6 @@ static void __exit sysfs_lcd_exit(void)
 
     kobject_put(lcd_kobj);        //destroy the object, remove the files
 }
-
-
-
 
 
 
