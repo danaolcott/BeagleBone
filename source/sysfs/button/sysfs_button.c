@@ -6,16 +6,19 @@ The purpose of this module is to utilize kobject and
 attributes to connect a button to an led.  The button
 is on an interrupt.  When the button is pressed the led
 toggles.  The led represents a toggle switch, identified
-by button state.  
+by led state.  
 
 Attributes include:
 number of button presses
 switch state - ie, if the led is on or off
 irq - for access from userland.
 
+This module can be used with the beaglebone backpack
+layout files located in source/backpack.
+
 Pinout:
-LED      - Pin 9-12 (60)
-Button   - Pin 9-27 (115)
+LED      - Pin 8-14 (26) - LED Blue
+Button   - Pin 9-30 (112) - left button
 
 The examples in the sysfs folder follow along with examples
 posted at http://www.derekmolloy.ie/, linux module programming
@@ -35,19 +38,18 @@ manual, and kernel.org examples.
 
 /////////////////////////////////////////////
 //Hardware globals 
-//Pin 9-12 (60) and GPIO Pin 9-27 (115)
+//Pin 8-14 (26) and GPIO Pin 9-30 (112)
 //
 //LED
-static unsigned int ledPin = 60;      //pin 9-12
+static unsigned int ledPin = 26;      //pin 8-14
 static unsigned int ledState = 0;     //state 0 - off, 1 - on
 
 //Button
-static unsigned int buttonPin = 115;
+static unsigned int buttonPin = 112;
 static unsigned int irq;
 
 //function prototypes - button isr
 static irq_handler_t buttonHandler(unsigned int irq_number, void *dev_id, struct pt_regs *regs);
-
 
 //////////////////////////////////////
 //Attributes - 
@@ -230,9 +232,9 @@ static int __init sysfs_button_init(void)
 {
     int retval, result;
 
-    //set up pin 9 - 12 (GPIO60) and set the initial state to off
+    //set up pin 8-14 (GPIO26) and set the initial state to off
     ledState = 0;
-    gpio_request(ledPin, "LED_PIN_GPIO_9_12");   //writes to label 
+    gpio_request(ledPin, "LED_PIN_GPIO_8_14");   //writes to label 
     gpio_direction_output(ledPin, ledState);   // ste to output and intial state
     gpio_set_value(ledPin, ledState);          // Not required as set by line above (here for reference)
 
@@ -240,14 +242,10 @@ static int __init sysfs_button_init(void)
     //prevent the pin direction from being changed
     gpio_export(ledPin, false);             
 
-    //button - set up pin9_27 (GPIO115)
-    gpio_request(buttonPin, "Button_PIN_GPIO_9_27");    //writes to label sys/class/gpio/gpio115/label
+    //button - set up pin9_30 (GPIO112)
+    gpio_request(buttonPin, "Button_PIN_GPIO_9_30");    //writes to label sys/class/gpio/gpio112/label
     gpio_direction_input(buttonPin);                    //button input
     gpio_set_debounce(buttonPin, 500);                  //debounce 500ms
-
-    //enable pullups
-    //gpio_pullup(buttonPin, 1);
-    gpio_pullup(buttonPin, 1);        //1 - enable, 0 - disable
     gpio_export(buttonPin, false);                      //shows up in sys/class/gpio/gpio115
 
     //set up irq and interrupts for the button
