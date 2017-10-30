@@ -10,9 +10,10 @@ the button triggers the interrpt that runs a functinon.
 The function resets a static counter to post delayed work
 to another function.
 
+This module can be used with the beaglebone backpack
 Pins - 
-LED      - Pin 8-14 (GPIO26)
-Button   - Pin 9-30 (112)
+LED      - Pin 8-14 (GPIO26)   - blue led
+Button   - Pin 9-30 (112)      - button
 
 The examples in the sysfs folder follow along with tutorials
 posted at  http://www.derekmolloy.ie/ and use the linux/gpio.h
