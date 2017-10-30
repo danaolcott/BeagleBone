@@ -242,9 +242,13 @@ static int __init sysfs_button_init(void)
 
     //button - set up pin9_27 (GPIO115)
     gpio_request(buttonPin, "Button_PIN_GPIO_9_27");    //writes to label sys/class/gpio/gpio115/label
-    gpio_direction_input(buttonPin);                   //button input
-    gpio_set_debounce(buttonPin, 500);                 //debounce 500ms
-    gpio_export(buttonPin, false);                  //shows up in sys/class/gpio/gpio115
+    gpio_direction_input(buttonPin);                    //button input
+    gpio_set_debounce(buttonPin, 500);                  //debounce 500ms
+
+    //enable pullups
+    //gpio_pullup(buttonPin, 1);
+    gpio_pullup(buttonPin, 1);        //1 - enable, 0 - disable
+    gpio_export(buttonPin, false);                      //shows up in sys/class/gpio/gpio115
 
     //set up irq and interrupts for the button
     irq = gpio_to_irq(buttonPin);
@@ -252,7 +256,7 @@ static int __init sysfs_button_init(void)
     //connect the lin to the handler function, set the interrupt trigger source
     result = request_irq(irq,
                        (irq_handler_t)buttonHandler,
-                       IRQF_TRIGGER_RISING,
+                       IRQF_TRIGGER_FALLING,
                        "button_handler",
                        NULL);
 

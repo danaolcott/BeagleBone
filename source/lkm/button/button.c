@@ -11,8 +11,8 @@ The function resets a static counter to post delayed work
 to another function.
 
 Pins - 
-LED      - Pin 9-12 (60)
-Button   - Pin 9-27 (115)
+LED      - Pin 8-14 (GPIO26)
+Button   - Pin 9-30 (112)
 
 The examples in the sysfs folder follow along with tutorials
 posted at  http://www.derekmolloy.ie/ and use the linux/gpio.h
@@ -29,20 +29,20 @@ functions.  Also info from linux module programming manual
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dana Olcott");
-MODULE_DESCRIPTION("Simple LED Toggle Example");
+MODULE_DESCRIPTION("Simple Button and LED Example");
 MODULE_VERSION("0.1");
 
 /////////////////////////////////////////////
 //Globals for tracking state of the GPIO 
-//Pin 9-12 (60) and GPIO Pin 9-27 (115)
+//Pin 8-14(26) and GPIO Pin 9-30 (112)
 //
 //LED
-static unsigned int ledPin = 60;      //pin 9-12
+static unsigned int ledPin = 26;      //pin 8-14
 static unsigned int ledState = 0;     //state 0 - off, 1 - on
 static unsigned int numFlashes = 0;   //number of workqueue passes on a single press
 
 //Button
-static unsigned int buttonPin = 115;
+static unsigned int buttonPin = 112;
 static unsigned int irqNumber;
 
 //function prototypes - workqueue
@@ -63,29 +63,31 @@ static int __init button_init(void)
 
    printk(KERN_INFO "button_init\n");
  
-   //set up pin 9 - 12 (GPIO60) and set the initial state to off
+   //set up pin 8-14 (GPIO26) and set the initial state to off
    ledState = 0;
-   gpio_request(ledPin, "LED_PIN_GPIO_9_12");   //writes to label 
+   gpio_request(ledPin, "LED_PIN_GPIO_8_14");   //writes to label 
    gpio_direction_output(ledPin, ledState);   // ste to output and intial state
-   gpio_set_value(ledPin, ledState);          // Not required as set by line above (here for reference)
+   gpio_set_value(ledPin, ledState);
 
    //export pin to sys/class/gpio.  Pass False to 
    //prevent the pin direction from being changed
    gpio_export(ledPin, false);             
 
-   //button - set up pin9_27 (GPIO115)
-   gpio_request(buttonPin, "Button_PIN_GPIO_9_27");    //writes to label sys/class/gpio/gpio115/label
+   //button - set up pin9_30 (GPIO112)
+   gpio_request(buttonPin, "Button_PIN_GPIO_9_30");    //writes to label sys/class/gpio/gpio112/label
    gpio_direction_input(buttonPin);                   //button input
    gpio_set_debounce(buttonPin, 500);                 //debounce 500ms
-   gpio_export(buttonPin, false);                  //shows up in sys/class/gpio/gpio115
+   gpio_export(buttonPin, false);                  //shows up in sys/class/gpio/gpio112
 
    //set up irq and interrupts for the button
    irqNumber = gpio_to_irq(buttonPin);
 
-   //connect the lin to the handler function, set the interrupt trigger source
+   //connect the line to the handler function, trigger on
+   //falling since we have a pullup resistor
+   //
    result = request_irq(irqNumber,
                         (irq_handler_t)buttonHandler,
-                        IRQF_TRIGGER_RISING,
+                        IRQF_TRIGGER_FALLING,
                         "button_handler",
                         NULL);
 
