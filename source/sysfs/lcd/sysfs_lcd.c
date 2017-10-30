@@ -153,7 +153,7 @@ static ssize_t line1_store(struct kobject *kobj, struct kobj_attribute *attr,
         len, len, count, line1);
 
     //write len chars from line1 into the lcd
-    lcd_writeStringBytes(line1, len, 0, 0);
+    lcd_writeStringBytes(line1, len, 1, 0);
 
     return count;
 }
@@ -195,7 +195,7 @@ static ssize_t line2_store(struct kobject *kobj, struct kobj_attribute *attr,
         len, len, count, line2);
 
     //write len chars from line2 into the lcd
-    lcd_writeStringBytes(line2, len, 0, 0);
+    lcd_writeStringBytes(line2, len, 2, 0);
 
     return count;
 }
