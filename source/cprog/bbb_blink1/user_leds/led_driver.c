@@ -13,7 +13,9 @@
 #include "led_driver.h"
 
 #include <stdio.h>
-#include <fcntl.h>		//open, close, read, write O_RDWR
+#include <fcntl.h>		//macro defintions
+#include <unistd.h>		//open, close, read, write... etc
+
 #include <string.h>
 
 

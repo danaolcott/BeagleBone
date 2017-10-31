@@ -4,9 +4,10 @@
  *  Created on: Sep 25, 2017
  *      Author: danao
  *
- *      Simple Hello Project
- *      Print hello to the terminal on a timer.
-
+ *      Simple Blink Project
+ *
+ *      Toggle the user leds 0 - 3 on a timer.
+ *
  *      Configure timer as Real or Virtual.  Real
  *      timer accounts for time that the process
  *      is running and not running.  Virtual timer
