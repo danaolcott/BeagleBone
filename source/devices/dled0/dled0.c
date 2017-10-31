@@ -99,6 +99,7 @@ static int Major = 0;		//major device number
 static int Device_Open = 0;	//increments/decrements
 static char msg[BUF_LEN] = {0};	//buffer for read/write
 static int msgSize = 0;		//size message to/from user
+static char* msgPtr = msg;		//position in the msg buffer
 
 static struct class* charClass = NULL;		//for auto create /dev files
 static struct device* charDevice = NULL;	//for auto create /dev files
@@ -177,11 +178,9 @@ static int __init device_init(void)
 	memset(msg, 0x00, BUF_LEN);
 
 	if (ioDataOutValue & LED0_BIT)
-		msgSize = sprintf(msg, "1");
+		msgSize = sprintf(msg, "1\n");
 	else
-		msgSize = sprintf(msg, "0");
-
-
+		msgSize = sprintf(msg, "0\n");
 
 	return 0;
 
@@ -208,7 +207,7 @@ static void __exit device_exit(void)
 	//clear the led and clear up contens of msg
 	iowrite32(LED0_BIT, ioClearReg);
 	memset(msg, 0x00, BUF_LEN);
-	msgSize = sprintf(msg, "0");
+	msgSize = sprintf(msg, "0\n");
 }
 
 
@@ -256,7 +255,7 @@ static int device_release(struct inode *inode, struct file *file)
 //Need a check to make sure msgPosition < BUF_LEN
 static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_t * offset)
 {
-	int error_count = 0;
+	int bytes_read = 0x00;
 
 	printk(KERN_INFO "Device Read Called\n");
 
@@ -266,30 +265,32 @@ static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_
 	ioDataOutValue = ioread32(ioDataOutReg);
 
 	if (ioDataOutValue & LED0_BIT)
-		msgSize = sprintf(msg, "1");
+		msgSize = sprintf(msg, "1\n");
 	else
-		msgSize = sprintf(msg, "0");
+		msgSize = sprintf(msg, "0\n");
+
 
 	//transfer data from kernel space to user space 
 	//via the api call copy_to_user
 	//buffer = user space buffer
 	//msg = kernel space buffer
-	//msgSize = length of the message (set on write)
+	//size_of_message = length of the message (set on write)
 	//error_count = number of bytes not transmitted.
 	//
-	error_count = copy_to_user(buffer, msg, msgSize);
+	if (*msgPtr == 0)
+	{
+		msgPtr = msg;
+		return 0;
+	}
 
-	if (error_count == 0)
+	while (length && *msgPtr)
 	{
-		printk(KERN_EMERG "Msg: %s", msg);
-		return (msgSize = 0);
+		put_user(*(msgPtr++), buffer++);
+		length--;
+		bytes_read++;		
 	}
-	else
-	{
-		printk(KERN_EMERG "Failed to Copy %d chars from msg[] into buffer\n", error_count);		
-		return -EFAULT;
-	}
-	
+
+	return bytes_read;
 }
 
 
