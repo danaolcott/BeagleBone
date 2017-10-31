@@ -1,19 +1,19 @@
 //////////////////////////////////////////////////////////
 //Loadable Kernel Module Example using the BeagleBone Black
 //
-//GPIO Pin 26 - Pin 8-14 Device File
+//GPIO Pin 27 - Pin 8-17 Device File
 //
 //A simple device driver that allows user to 
-//set, clear, and toggle GPIO26 (8-14) by writing to the 
-///dev/pin26 file.  
+//set, clear, and toggle GPIO27 (8-17) by writing to the 
+///dev/pin27 file.  
 //
 //module_init - Configures the pin as output and sets low
 //module_exit - Sets pin low and restores to input state
 //msg[] - holding buffer for linux/user space
 //msgSize - size of message from cat/echo/read/write, etc
 //
-//Note: if using the backpack board, GPIO26
-//is the blue led  
+//Note: if using the backpack board, GPIO27
+//is the red led
 //
 #include <linux/init.h>		//__init and __exit macros
 #include <linux/module.h>	//required for any module
@@ -110,7 +110,7 @@ static int ioOEValue;			//value held by OE reg
 //Module Information
 MODULE_LICENSE("GPL");		//has to be GPL or else GPL-only error
 MODULE_AUTHOR("Dana Olcott");
-MODULE_DESCRIPTION("GPIO Pin 26 Device Driver");
+MODULE_DESCRIPTION("GPIO Pin 27 Device Driver");
 MODULE_VERSION("0.1");
 
 ////////////////////////////////////////
@@ -121,8 +121,8 @@ static ssize_t device_read(struct file *, char *, size_t, loff_t *);
 static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 
 #define SUCCESS 	0
-#define DEVICE_NAME	"pin26"		//name as appears in /proc/devices
-#define CLASS_NAME	"pin26"		//not sure if this needs to be same/diff from device name
+#define DEVICE_NAME	"pin27"		//name as appears in /proc/devices
+#define CLASS_NAME	"pin27"		//not sure if this needs to be same/diff from device name
 #define BUF_LEN		10			//max message size from the device
 
 
@@ -154,7 +154,7 @@ static struct file_operations fops = {
 //
 static int __init device_init(void)
 {
-	printk(KERN_INFO "GPIO26 - device init()");
+	printk(KERN_INFO "GPIO27 - device init()");
 	printk(KERN_INFO "Register Device: %s\n", DEVICE_NAME);
 
 	//register device, 0 = assign device number dynamically
@@ -202,7 +202,7 @@ static int __init device_init(void)
 
 
 	//remap the hardware space to kernel space
-	//GPIO26 resides on GPIO0
+	//GPIO27 resides on GPIO0
 	ioDataOutReg = ioremap(GPIO0_OUTPUT_REG, 4);	//read
 	ioDataInReg = ioremap(GPIO0_INPUT_REG, 4);		//read
 	ioSetReg = ioremap(GPIO0_SET_REG, 4);			//write only
@@ -215,8 +215,8 @@ static int __init device_init(void)
 	ioOEValue = ioread32(ioOEReg);					//OE pin status on GPIO0
 
 	//clear pin 26 on OE Register to Set as Output
-	iowrite32((ioOEValue &=~PIN_26_BIT), ioOEReg);
-	iowrite32(PIN_26_BIT, ioClearReg);
+	iowrite32((ioOEValue &=~PIN_27_BIT), ioOEReg);
+	iowrite32(PIN_27_BIT, ioClearReg);
 
 	//write out the values
 	printk(KERN_INFO "Data Out Value: 0x%08x\n", ioDataOutValue);
@@ -226,7 +226,7 @@ static int __init device_init(void)
 	//init the kernel message buffer with initial state
 	memset(msg, 0x00, BUF_LEN);
 
-	if (ioDataOutValue & PIN_26_BIT)
+	if (ioDataOutValue & PIN_27_BIT)
 		msgSize = sprintf(msg, "1");
 	else
 		msgSize = sprintf(msg, "0");
@@ -238,25 +238,25 @@ static int __init device_init(void)
 //device_exit()
 //Destroy device and unregister the class, device
 //and the driver.
-//Set GPIO 26 low and restore to input state
+//Set GPIO 27 low and restore to input state
 //
 static void __exit device_exit(void)
 {
-	printk(KERN_INFO "GPIO26 - device_exit()\n");
+	printk(KERN_INFO "GPIO27 - device_exit()\n");
 
 	device_destroy(charClass, MKDEV(Major, 0));	//remove the device
 	class_unregister(charClass);				//unrgister device class
 	class_destroy(charClass);					//destroy class
 	unregister_chrdev(Major, DEVICE_NAME);		//unregister the device
 
-	//clear value of pin26
-	iowrite32(PIN_26_BIT, ioClearReg);
+	//clear value of pin27
+	iowrite32(PIN_27_BIT, ioClearReg);
 	memset(msg, 0x00, BUF_LEN);
 	msgSize = sprintf(msg, "0");
 
-	//set pin26 on OE Register to restore as input
+	//set pin27 on OE Register to restore as input
 	ioOEValue = ioread32(ioOEReg);
-	iowrite32((ioOEValue |= PIN_26_BIT), ioOEReg);
+	iowrite32((ioOEValue |= PIN_27_BIT), ioOEReg);
 }
 
 
@@ -295,10 +295,10 @@ static int device_release(struct inode *inode, struct file *file)
 
 /////////////////////////////////////////
 //device_read
-//Called when "cat /dev/pin26"... etc
+//Called when "cat /dev/pin27"... etc
 //or a device read from user function
 //
-//Reads the bit cooresponding to pin26
+//Reads the bit cooresponding to pin27
 //indicating it's high or low and writing
 //appropriate null termined value into
 //kernel space buffer, msg.
@@ -320,7 +320,7 @@ static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_
 	//buffer(user space)
 	ioDataOutValue = ioread32(ioDataOutReg);
 
-	if (ioDataOutValue & PIN_26_BIT)
+	if (ioDataOutValue & PIN_27_BIT)
 		msgSize = sprintf(msg, "1\n");
 	else
 		msgSize = sprintf(msg, "0\n");
@@ -396,18 +396,18 @@ static ssize_t device_write(struct file *filp, const char *buff, size_t len, lof
 		{
 			//clear
 			case '0':
-				iowrite32(PIN_26_BIT, ioClearReg);
+				iowrite32(PIN_27_BIT, ioClearReg);
 				break;
 			//set
 			case '1':
-				iowrite32(PIN_26_BIT, ioSetReg);
+				iowrite32(PIN_27_BIT, ioSetReg);
 				break;
 			//toggle
 			case '2':
-				if (ioDataOutValue & PIN_26_BIT)
-					iowrite32(PIN_26_BIT, ioClearReg);
+				if (ioDataOutValue & PIN_27_BIT)
+					iowrite32(PIN_27_BIT, ioClearReg);
 				else
-					iowrite32(PIN_26_BIT, ioSetReg);
+					iowrite32(PIN_27_BIT, ioSetReg);
 				break;
 		}
 	}	
