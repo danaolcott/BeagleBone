@@ -11,6 +11,9 @@
 //msg[] - holding buffer for linux/user space
 //msgSize - size of message from cat/echo/read/write, etc
 //
+//Note: if using the backpack board, GPIO60
+//is the big via next to the LED blue.  
+//
 #include <linux/init.h>		//__init and __exit macros
 #include <linux/module.h>	//required for any module
 #include <linux/device.h>	//register device class
@@ -108,6 +111,8 @@ static int Major = 0;					//major device number
 static int Device_Open = 0;				//increments/decrements
 static char msg[BUF_LEN] = {0};			//buffer for read/write
 static int msgSize = 0;					//size message to/from user
+static char* msgPtr = msg;
+
 
 static struct class* charClass = NULL;	//for auto create /dev files
 static struct device* charDevice = NULL;//for auto create /dev files
@@ -268,19 +273,27 @@ static int device_release(struct inode *inode, struct file *file)
 }
 
 /////////////////////////////////////////
-//Called when terminal goes: cat /dev/dgpio18
-//NOTE:
-//Don't reset the buffer counter on a read.  
-//The reason is that cat command calls this function
-//until it returns 0?... or...  either way, if you
-//keep reseting the position, it will call this function
-//for ever!!  Instead, reset the counter in open.
-//Need a check to make sure msgPosition < BUF_LEN
+//device_read
+//Called when "cat /dev/pin9_12"... etc
+//or a device read from user function
+//
+//Reads the bit cooresponding to pin9_12
+//indicating it's high or low and writing
+//appropriate null termined value into
+//kernel space buffer, msg.  In theory, this
+//could simply read the contents of msg back to the
+//user.  
+//This function actually gets called 2x on each
+//read, the first time returning the number of read
+//bytes, last time returning 0x00 since the msgPtr hit
+//the end of the buffer.
+//since we are not reading the contents back from echo,
+//why not just clear the msg buffer?
 static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_t * offset)
 {
-	int error_count = 0;
-
+	int bytes_read = 0;
 	printk(KERN_INFO "Device Read Called\n");
+	memset(msg, 0x00, BUF_LEN);
 
 	//read the status of the pin, write the appropriate
 	//value into msg (kernel space) and transfer to
@@ -288,30 +301,44 @@ static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_
 	ioDataOutValue = ioread32(ioDataOutReg);
 
 	if (ioDataOutValue & PIN_9_12_BIT)
-		msgSize = sprintf(msg, "1");
+	{
+		msgSize = sprintf(msg, "1\n");
+	}
+
 	else
-		msgSize = sprintf(msg, "0");
+	{
+		msgSize = sprintf(msg, "0\n");
+	}
 
 	//transfer data from kernel space to user space 
-	//via the api call copy_to_user
-	//buffer = user space buffer
-	//msg = kernel space buffer
-	//msgSize = length of the message (set on write)
-	//error_count = number of bytes not transmitted.
+	//Use byte by byte transfer until reaching the end of
+	//msg buffer.  User msgPtr to track where we are in the buffer.
 	//
-	error_count = copy_to_user(buffer, msg, msgSize);
+	//Should result in two calls to read, first time returning
+	//number of bytes, second time returning 0x00
+	//
+	//msg = kernel buffer
+	//msgPtr = pointer to the message buffer that increments
+	//until it reaches 0x00, set to front on a write
+	//bytes_read - counter
+	//
+	if(*msgPtr == 0)
+	{
+		msgPtr = msg;		//reset for next time
+		return 0;
+	}
 
-	if (error_count == 0)
+	//keep writing while we read something from buffer
+	//length is a max length, this could be from a 
+	//user space programing calling "read"
+	while (length && *msgPtr)
 	{
-		printk(KERN_EMERG "Msg: %s", msg);
-		return (msgSize = 0);
+		put_user(*(msgPtr++), buffer++);
+		length--;
+		bytes_read++;
 	}
-	else
-	{
-		printk(KERN_EMERG "Failed to Copy %d chars from msg[] into buffer\n", error_count);		
-		return -EFAULT;
-	}
-	
+
+    return bytes_read;	
 }
 
 
@@ -347,6 +374,7 @@ static ssize_t device_write(struct file *filp, const char *buff, size_t len, lof
 	if (error_count == 0)
 	{
 		msgSize = len;
+		msgPtr = msg;				//set the pointer to the front of the msg
 		printk(KERN_EMERG "ECHO OK: %s\n", msg);
 
 		switch(msg[0])
