@@ -47,6 +47,7 @@ static int Major = 0;		//major device number
 static int Device_Open = 0;	//increments/decrements
 static char msg[BUF_LEN] = {0};	//buffer for read/write
 static int size_of_msg = 0;
+static char* msgPtr = msg;
 
 static struct class* charClass = NULL;		//for auto create /dev files
 static struct device* charDevice = NULL;	//for auto create /dev files
@@ -187,7 +188,7 @@ static int device_release(struct inode *inode, struct file *file)
 //Need a check to make sure msgPosition < BUF_LEN
 static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_t * offset)
 {
-	int error_count = 0;
+	int bytes_read = 0x00;
 
 	printk(KERN_INFO "Device Read Called\n");
 
@@ -198,20 +199,21 @@ static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_
 	//size_of_message = length of the message (set on write)
 	//error_count = number of bytes not transmitted.
 	//
-	error_count = copy_to_user(buffer, msg, size_of_msg);
-
-	if (error_count == 0)
+	if (*msgPtr == 0)
 	{
-		printk(KERN_EMERG "Msg: %s", msg);
-		return (size_of_msg = 0);
+		msgPtr = msg;
+		return 0;
 	}
 
-	else
+	while (length && *msgPtr)
 	{
-		printk(KERN_EMERG "Failed to Copy %d chars from msg[] into buffer\n", error_count);		
-		return -EFAULT;
+		put_user(*(msgPtr++), buffer++);
+		length--;
+		bytes_read++;		
 	}
-	
+
+	return bytes_read;
+
 }
 
 
@@ -226,6 +228,10 @@ static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_
 //kernelBuffer = global buffer stored here, also accessed from read
 //userBuffer = "buff"
 //size = size of the message.
+//
+//msgPtr - position for readback when calling cat
+//or device read.  increments on read until it 
+//hits 0x00 at which time read returns 0
 //
 //NOTE:
 //If you try to access the contents of buff directly
@@ -246,6 +252,7 @@ static ssize_t device_write(struct file *filp, const char *buff, size_t len, lof
 	if (error_count == 0)
 	{
 		size_of_msg = len;
+		msgPtr = msg;			//set the ptr to front of message
 		printk(KERN_EMERG "ECHO OK: %s\n", msg);
 	}
 
