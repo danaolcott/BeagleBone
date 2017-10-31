@@ -50,6 +50,8 @@ MODULE_VERSION("0.1");
 //to loading this module to work properly
 
 #define LCD_LINE_WIDTH          ((int)16)
+#define LCD_LINE_BUFFER_SIZE    ((int)32)
+
 #define LCD_CONTRAST_DEFAULT    ((int)11)
 
 
@@ -70,9 +72,9 @@ extern void lcd_setContrast(uint8_t contrast);
 //var_show function - read / cat variable
 //var_store function - write / echo > variable
 
-static char line0[LCD_LINE_WIDTH];
-static char line1[LCD_LINE_WIDTH];
-static char line2[LCD_LINE_WIDTH];
+static char line0[LCD_LINE_BUFFER_SIZE];
+static char line1[LCD_LINE_BUFFER_SIZE];
+static char line2[LCD_LINE_BUFFER_SIZE];
 static int cursor;                  //0 off, 1 on
 static int contrast;                //0 to 15
 
@@ -84,7 +86,7 @@ static int contrast;                //0 to 15
 static ssize_t line0_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 { 
-    return sprintf(buf, ">%s<\n", line0);
+    return snprintf(buf, LCD_LINE_BUFFER_SIZE, ">%s<\n", line0);
 }
 
 ///////////////////////////////////////////
@@ -95,15 +97,13 @@ static ssize_t line0_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int i, len;
-    memset(line0, 0x00, LCD_LINE_WIDTH);
+    memset(line0, 0x00, LCD_LINE_BUFFER_SIZE);
     strncpy(line0, buf, LCD_LINE_WIDTH);
 
-    //strip line endings, replace all _ with space
+    //replace all line endings, 0x00, and _ with spaces
     for (i = 0 ; i < LCD_LINE_WIDTH ; i++)
     {
-        if ((line0[i] == '\n') || (line0[i] == '\r'))
-            line0[i] = 0x00;
-        else if (line0[i] == '_')
+        if ((line0[i] == '\n') || (line0[i] == '\r') || (line0[i] == 0x00) || (line0[i] == '_'))            
             line0[i] = ' ';
     }
 
@@ -125,7 +125,7 @@ static ssize_t line0_store(struct kobject *kobj, struct kobj_attribute *attr,
 static ssize_t line1_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 { 
-    return sprintf(buf, ">%s<\n", line1);
+    return snprintf(buf, LCD_LINE_BUFFER_SIZE, ">%s<\n", line1);
 }
 
 ///////////////////////////////////////////
@@ -136,19 +136,20 @@ static ssize_t line1_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int i, len;
-    memset(line1, 0x00, LCD_LINE_WIDTH);
+    memset(line1, 0x00, LCD_LINE_BUFFER_SIZE);
     strncpy(line1, buf, LCD_LINE_WIDTH);
 
     //strip line endings, replace all _ with space
+    //fill remaining lcd line length with spaces.
+    //
     for (i = 0 ; i < LCD_LINE_WIDTH ; i++)
     {
-        if ((line1[i] == '\n') || (line1[i] == '\r'))
-            line1[i] = 0x00;
-        else if (line1[i] == '_')
+        if ((line1[i] == '\n') || (line1[i] == '\r') || (line1[i] == 0x00) || (line1[i] == '_'))            
             line1[i] = ' ';
     }
 
-    len = strnlen(line1, LCD_LINE_WIDTH);    
+    //len should always return 16
+    len = strnlen(line1, LCD_LINE_WIDTH);
     printk(KERN_EMERG "ECHO: Copied %d chars into line1 (str len: %d, count: %d): >%s<\n", 
         len, len, count, line1);
 
@@ -166,7 +167,7 @@ static ssize_t line1_store(struct kobject *kobj, struct kobj_attribute *attr,
 static ssize_t line2_show(struct kobject *kobj, 
     struct kobj_attribute *attr, char *buf)
 { 
-    return sprintf(buf, ">%s<\n", line2);
+    return snprintf(buf, LCD_LINE_BUFFER_SIZE, ">%s<\n", line2);
 }
 
 
@@ -178,18 +179,17 @@ static ssize_t line2_store(struct kobject *kobj, struct kobj_attribute *attr,
           const char *buf, size_t count)
 {
     int i, len;
-    memset(line2, 0x00, LCD_LINE_WIDTH);
+    memset(line2, 0x00, LCD_LINE_BUFFER_SIZE);
     strncpy(line2, buf, LCD_LINE_WIDTH);
 
     //strip line endings, replace all _ with space
     for (i = 0 ; i < LCD_LINE_WIDTH ; i++)
     {
-        if ((line2[i] == '\n') || (line2[i] == '\r'))
-            line2[i] = 0x00;
-        else if (line2[i] == '_')
+        if ((line2[i] == '\n') || (line2[i] == '\r') || (line2[i] == 0x00) || (line2[i] == '_'))            
             line2[i] = ' ';
     }
 
+    //len should always be 16
     len = strnlen(line2, LCD_LINE_WIDTH);    
     printk(KERN_EMERG "ECHO: Copied %d chars into line2 (str len: %d, count: %d): >%s<\n", 
         len, len, count, line2);
@@ -338,9 +338,9 @@ static int __init sysfs_lcd_init(void)
     int a, b, c;
 
     //assign initial values and write
-    a = sprintf(line0, "Hello-Line0");
-    b = sprintf(line1, "Hello-Line1");
-    c = sprintf(line2, "Hello-Line2");
+    a = sprintf(line0, "LCD Module Init");
+    b = sprintf(line1, "Usage: CAT&ECHO");
+    c = sprintf(line2, "Lines 0-2");
 
     cursor = 0;
     contrast = LCD_CONTRAST_DEFAULT;
@@ -381,9 +381,9 @@ static void __exit sysfs_lcd_exit(void)
     int a, b, c;
 
     //assign initial values and write
-    a = sprintf(line0, "Goodby-Line0");
-    b = sprintf(line1, "Goodby-Line1");
-    c = sprintf(line2, "Goodby-Line2");
+    a = sprintf(line0, "................");
+    b = sprintf(line1, "LCD Module Exit");
+    c = sprintf(line2, "................");
 
     cursor = 0;
     contrast = LCD_CONTRAST_DEFAULT;
