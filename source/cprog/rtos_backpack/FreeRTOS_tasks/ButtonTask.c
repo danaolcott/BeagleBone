@@ -92,7 +92,7 @@ void ButtonTask(void *pvParameters)
 
         }
 
-    	vTaskDelay(100);
+    	vTaskDelay(10);
     }
 
     //clean exit

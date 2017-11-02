@@ -140,6 +140,7 @@ MODULE_AUTHOR("Dana Olcott");
 MODULE_DESCRIPTION("EADOGM163LA 3Line Character Display Interface");
 MODULE_VERSION("0.1");
 
+
 //line control
 static void lcd_pinConfig(void);			//config pins
 static void lcd_pinUnConfig(void);			//reset pin config to default
@@ -193,7 +194,6 @@ static void __exit lcd_interface_exit(void)
 	//restore pins to default states
 	lcd_pinUnConfig();
 }
-
 
 
 /////////////////////////////////////
@@ -334,16 +334,8 @@ void lcd_dataEnable(void)
 
 void lcd_pulseEPin(void)
 {
-	uint32_t value = 0x00;
-	int i = 0;
-
 	iowrite32(E_BIT, ioSet_ctl_Reg);
-
-	//dummy read to waste some time less than 1ms
-	//200 times does not work, 300 times ok
-	for (i = 0 ; i < 300 ; i++)
-		value = ioread32(ioOE_ctl_Reg);
-
+	msleep(1);
 	iowrite32(E_BIT, ioClear_ctl_Reg);
 }
 

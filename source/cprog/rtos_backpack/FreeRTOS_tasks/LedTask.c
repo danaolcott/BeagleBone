@@ -33,7 +33,7 @@ void LedTask_Init()
 
 	//start the controller task
 	xTaskCreate(LedTask, (const portCHAR *)"led_task", configMINIMAL_STACK_SIZE,
-			NULL, tskIDLE_PRIORITY + 1, &LedTaskHandle);
+			NULL, tskIDLE_PRIORITY + 3, &LedTaskHandle);
 
 	printf("LedTask_Init()\n");
 }

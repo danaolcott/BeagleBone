@@ -27,7 +27,7 @@ xTaskHandle DisplayTaskHandle = NULL;
 void DisplayTask_Init()
 {
 	xTaskCreate(DisplayTask, (const portCHAR *)"disp_task", configMINIMAL_STACK_SIZE,
-			NULL, tskIDLE_PRIORITY + 1, &DisplayTaskHandle);
+			NULL, tskIDLE_PRIORITY + 2, &DisplayTaskHandle);
 
 	printf("DisplayTask_Init()\n");
 }
