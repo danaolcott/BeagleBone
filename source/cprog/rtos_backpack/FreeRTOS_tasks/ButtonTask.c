@@ -15,7 +15,7 @@ up to here, but having a hard time with it
 #include "ButtonTask.h"		//task level
 #include "button_driver.h"	//hardware level
 
-#include "lcd_driver.h"
+#include "DisplayTask.h"	//message struct and queue
 
 /////////////////////////////////////////////////
 //task and handle defs
@@ -51,8 +51,11 @@ void ButtonTask_Init()
 //
 void ButtonTask(void *pvParameters)
 {
+	DisplayMessage msg;
+	int n;
     printf("Running ButtonTask\n");
     uint8_t buttonValue = 0x00;
+    uint8_t buttonFlag = 0x00;
 
     for(;;)
     {
@@ -61,35 +64,70 @@ void ButtonTask(void *pvParameters)
         buttonValue = button_read(BUTTON_TYPE_LEFT);
         if (!buttonValue)
         {
-            //do something
         	printf("Button Left Pressed\n");
-        	lcd_writeLine(2, "Left Button");
-        	vTaskDelay(200);
-        	lcd_writeLine(2, "_____________________");
+        	buttonFlag = 1;
 
+        	//post a message to the display to show something
+        	memset(msg.buffer, 0x00, DISPLAY_BUFFER_SIZE);
+        	n = sprintf(msg.buffer, "Left Button");
+        	msg.sig = DISPLAY_SIG_WRITE_LINE_BYTES;
+        	msg.length = n;
+        	msg.line = 2;
+
+        	//post message to queue with no waiting
+        	xQueueSend(DisplayQueue, &msg, portMAX_DELAY);
         }
 
         buttonValue = button_read(BUTTON_TYPE_CENTER);
         if (!buttonValue)
         {
-            //do something
-        	printf("Button Center Pressed\n");
-        	lcd_writeLine(2, "Center Button");
-        	vTaskDelay(200);
-        	lcd_writeLine(2, "_____________________");
+        	printf("Center Button Pressed\n");
+        	buttonFlag = 1;
 
+        	//post a message to the display to show something
+        	memset(msg.buffer, 0x00, DISPLAY_BUFFER_SIZE);
+        	n = sprintf(msg.buffer, "Center Button");
+        	msg.sig = DISPLAY_SIG_WRITE_LINE_BYTES;
+        	msg.length = n;
+        	msg.line = 2;
 
+        	//post message to queue with no waiting
+        	xQueueSend(DisplayQueue, &msg, portMAX_DELAY);
         }
 
         buttonValue = button_read(BUTTON_TYPE_RIGHT);
         if (!buttonValue)
         {
-            //do something
-        	printf("Button Right Pressed\n");
-        	lcd_writeLine(2, "Right Button");
-        	vTaskDelay(200);
-        	lcd_writeLine(2, "_____________________");
+        	printf("Right Button Pressed\n");
+        	buttonFlag = 1;
 
+        	//post a message to the display to show something
+        	memset(msg.buffer, 0x00, DISPLAY_BUFFER_SIZE);
+        	n = sprintf(msg.buffer, "Right Button");
+        	msg.sig = DISPLAY_SIG_WRITE_LINE_BYTES;
+        	msg.length = n;
+        	msg.line = 2;
+
+        	//post message to queue with no waiting
+        	xQueueSend(DisplayQueue, &msg, portMAX_DELAY);
+        }
+
+        //test the flag for if a button was pressed, if
+        //so then clear the message
+        if (buttonFlag)
+        {
+        	vTaskDelay(200);
+
+			memset(msg.buffer, 0x00, DISPLAY_BUFFER_SIZE);
+			n = sprintf(msg.buffer, "________________");
+			msg.sig = DISPLAY_SIG_WRITE_LINE_BYTES;
+			msg.length = n;
+			msg.line = 2;
+
+			//post message to queue with no waiting
+			xQueueSend(DisplayQueue, &msg, portMAX_DELAY);
+
+        	buttonFlag = 0;
         }
 
     	vTaskDelay(10);

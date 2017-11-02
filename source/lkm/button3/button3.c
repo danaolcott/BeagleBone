@@ -61,6 +61,10 @@ static DECLARE_DELAYED_WORK(work_blue, work_function_blue);
 static void work_function_red(struct work_struct *unused);
 static DECLARE_DELAYED_WORK(work_red, work_function_red);
 
+//function prototypes - workqueue - all leds
+static void work_function_all(struct work_struct *unused);
+static DECLARE_DELAYED_WORK(work_all, work_function_all);
+
 
 //function prototypes - button handler functions
 static irq_handler_t buttonLeftHandler(unsigned int irq, void *dev_id, struct pt_regs *regs);
@@ -187,6 +191,7 @@ static void __exit button3_exit(void)
    //remove all items associated with the workqueue
    cancel_delayed_work(&work_blue);
    cancel_delayed_work(&work_red);
+   cancel_delayed_work(&work_all);
    flush_scheduled_work();
 
 }
@@ -211,6 +216,11 @@ static void work_function_blue(struct work_struct *unused)
       gpio_set_value(ledBluePin, ledBlueState);
       schedule_delayed_work(&work_blue, 1*HZ / 10);
    }
+   else
+   {
+      ledBlueState = 0;
+      gpio_set_value(ledBluePin, ledBlueState);            
+   }
 }
 
 
@@ -232,8 +242,52 @@ static void work_function_red(struct work_struct *unused)
       gpio_set_value(ledRedPin, ledRedState);
       schedule_delayed_work(&work_red, 1*HZ / 10);
    }
+   else
+   {
+      ledRedState = 0;
+      gpio_set_value(ledRedPin, ledRedState);
+   }
 }
 
+
+
+/////////////////////////////////////////////////
+//work_function_all
+//Function called when delayed work timesout
+//Alternate ledRedPin and ledBluePin
+//
+static void work_function_all(struct work_struct *unused)
+{
+   if (numBlueFlashes > 0)
+   {
+      numBlueFlashes--;
+      if (!ledBlueState)
+      {
+         ledBlueState = 1;
+         ledRedState = 0;
+      }
+
+      else
+      {
+         ledBlueState = 0;
+         ledRedState = 1;
+      }
+
+      gpio_set_value(ledBluePin, ledBlueState);
+      gpio_set_value(ledRedPin, ledRedState);
+
+      schedule_delayed_work(&work_all, 1*HZ / 10);
+   }
+
+   //else - all off
+   else
+   {
+      ledBlueState = 0;
+      ledRedState = 0;
+      gpio_set_value(ledBluePin, ledBlueState);
+      gpio_set_value(ledRedPin, ledRedState);
+   }
+}
 
 
 
@@ -284,28 +338,25 @@ static irq_handler_t buttonCenterHandler(unsigned int irq, void *dev_id, struct 
 ////////////////////////////////////////////////////////////////
 //buttonRightHandler 
 //Function Defintions
-//simply toggle the red and blue leds
+//Toggle blue and red alternating, use blue flashes
+//as the counter and work_all as the work function
 //
 static irq_handler_t buttonRightHandler(unsigned int irq, void *dev_id, struct pt_regs *regs)
 {
    //print something
    printk(KERN_EMERG "Button Right Handler!!\n");
 
-   //toggle the led states of blue and red leds
-   if (!ledRedState)
-      ledRedState = 1;
-   else
-      ledRedState = 0;
+   //use numBlueFlashes as the counter for both leds
+   //only post if done flashing
+   if (!numBlueFlashes)
+   {
+      //start the work
+      numBlueFlashes = 10;      //reset
+      //init work
+      schedule_delayed_work(&work_all, 1*HZ / 10);
+   }
 
-   if (!ledBlueState)
-      ledBlueState = 1;
-   else
-      ledBlueState = 0;
-
-   gpio_set_value(ledBluePin, ledBlueState);
-   gpio_set_value(ledRedPin, ledRedState);
-
-   return (irq_handler_t) IRQ_HANDLED;   
+   return (irq_handler_t) IRQ_HANDLED;            
 }
 
 

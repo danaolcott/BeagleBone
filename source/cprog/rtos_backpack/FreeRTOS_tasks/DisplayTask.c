@@ -12,7 +12,7 @@ read the contents of eeprom and display it
 
 //////////////////////////////////////////////////
 #include "DisplayTask.h"	//task level
-#include "eeprom_driver.h"	//for testing the eeprom interface
+
 #include "lcd_driver.h"		//for testing the lcd interface
 
 /////////////////////////////////////////////////
@@ -22,12 +22,20 @@ static void DisplayTask(void *pvParameters);
 //task handles
 xTaskHandle DisplayTaskHandle = NULL;
 
+//queue definition
+xQueueHandle DisplayQueue;
+
+
 /////////////////////////////////////////////////
 //DisplayTask_Init
 void DisplayTask_Init()
 {
+	//task
 	xTaskCreate(DisplayTask, (const portCHAR *)"disp_task", configMINIMAL_STACK_SIZE,
-			NULL, tskIDLE_PRIORITY + 2, &DisplayTaskHandle);
+			NULL, tskIDLE_PRIORITY + 1, &DisplayTaskHandle);
+
+	//queue - queue of DisplayMessage structs
+	DisplayQueue= xQueueCreate(10, sizeof(DisplayMessage));
 
 	printf("DisplayTask_Init()\n");
 }
@@ -40,38 +48,38 @@ void DisplayTask_Init()
 //
 void DisplayTask(void *pvParameters)
 {
-	int n = 0;
-	uint8_t dataWrite = 0x00;
-	uint8_t dataRead = 0x00;
-	uint16_t address = 0x00;
-	char buffer[32];
-
-	printf("Running DisplayTask\n");
+	DisplayMessage msg;
 
     for(;;)
     {
-        //write dataWrite into address
-        eeprom_writeData(address, dataWrite);
-        printf("EEPROM Write -> ADD: 0x%04x, DATA: 0x%02x\n",
-        address, dataWrite);
-
-        //read the data back
-        dataRead = eeprom_readData(address);
-        printf("EEPROM Read  -> ADD: 0x%04x, DATA: 0x%02x\n\n",
-        address, dataRead);
-
-        //display the contents on the lcd
-        lcd_writeLine(0, "ADDR/WRITE/READ");
-
-        memset(buffer, 0x00, 32);
-        n = sprintf(buffer, "0x%04x,0x%02x,0x%02x", address, dataWrite, dataRead);
-        lcd_writeLineBytes(1, buffer, n);
-
-        dataWrite++;
-        address++;
-
-        vTaskDelay(2000);
-    
+        if (pdPASS == xQueueReceive(DisplayQueue, &msg, portMAX_DELAY))
+        {
+        	switch(msg.sig)
+        	{
+        		case DISPLAY_SIG_CLEAR:
+        		{
+        			lcd_writeLine(0, "________________");
+        			lcd_writeLine(1, "________________");
+        			lcd_writeLine(2, "________________");
+        			break;
+        		}
+        		case DISPLAY_SIG_WRITE_LINE:
+        		{
+        			lcd_writeLine(msg.line, (char*)msg.buffer);
+        			break;
+        		}
+        		case DISPLAY_SIG_WRITE_LINE_BYTES:
+        		{
+        			lcd_writeLineBytes(msg.line, (char*)msg.buffer, msg.length);
+        			break;
+        		}
+        		default:
+        		{
+        			printf("Invalid Signal\n");
+        			break;
+        		}
+        	}
+        }
     }
 
     //clean exit
