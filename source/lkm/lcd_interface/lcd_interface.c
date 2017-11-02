@@ -285,32 +285,27 @@ void lcd_pinUnConfig(void)
 //
 void lcd_setDataLines(uint8_t data)
 {
-	uint8_t bit0, bit1, bit2, bit3;
+	uint8_t bit0, bit1, bit2, bit3;			//normal
+	uint8_t ibit0, ibit1, ibit2, ibit3;		//inverse
+	uint32_t resultOn = 0x00;
+	uint32_t resultOff = 0x00;
+	uint8_t idata = ~data;				//inverse data
 
 	bit0 = (data >> 0) & 0x01;
 	bit1 = (data >> 1) & 0x01;
 	bit2 = (data >> 2) & 0x01;
 	bit3 = (data >> 3) & 0x01;
+	ibit0 = (idata >> 0) & 0x01;
+	ibit1 = (idata >> 1) & 0x01;
+	ibit2 = (idata >> 2) & 0x01;
+	ibit3 = (idata >> 3) & 0x01;
 
-	if (!bit0)
-		iowrite32(DATA0_BIT, ioClear_data_Reg);
-	else
-		iowrite32(DATA0_BIT, ioSet_data_Reg);
+	resultOn |= ((bit3 << 5) | (bit2 << 4) | (bit1 << 3) | (bit0 << 2));
+	iowrite32(resultOn, ioSet_data_Reg);
 
-	if (!bit1)
-		iowrite32(DATA1_BIT, ioClear_data_Reg);
-	else
-		iowrite32(DATA1_BIT, ioSet_data_Reg);
+	resultOff |= ((ibit3 << 5) | (ibit2 << 4) | (ibit1 << 3) | (ibit0 << 2));
+	iowrite32(resultOff, ioClear_data_Reg);
 
-	if (!bit2)
-		iowrite32(DATA2_BIT, ioClear_data_Reg);
-	else
-		iowrite32(DATA2_BIT, ioSet_data_Reg);
-
-	if (!bit3)
-		iowrite32(DATA3_BIT, ioClear_data_Reg);
-	else
-		iowrite32(DATA3_BIT, ioSet_data_Reg);
 }
 
 //RW = 0
@@ -339,8 +334,16 @@ void lcd_dataEnable(void)
 
 void lcd_pulseEPin(void)
 {
+	uint32_t value = 0x00;
+	int i = 0;
+
 	iowrite32(E_BIT, ioSet_ctl_Reg);
-	msleep(1);
+
+	//dummy read to waste some time less than 1ms
+	//200 times does not work, 300 times ok
+	for (i = 0 ; i < 300 ; i++)
+		value = ioread32(ioOE_ctl_Reg);
+
 	iowrite32(E_BIT, ioClear_ctl_Reg);
 }
 

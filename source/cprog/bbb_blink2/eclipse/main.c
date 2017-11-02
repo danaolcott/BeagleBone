@@ -31,15 +31,15 @@ int main()
 
 	while (1)
 	{
-		printf("Pin9_12 OFF!!\n");
+		printf("Pin26 OFF!!\n");
 
-		gpio_set(GPIO_PIN_9_12, GPIO_STATE_OFF);
-		printf("Readback Value: %d\n", gpio_get_state(GPIO_PIN_9_12));
+		gpio_set(GPIO_PIN_26, GPIO_STATE_OFF);
+		printf("Readback Value: %d\n", gpio_get_state(GPIO_PIN_26));
 		timer_delay(1000);
 
-		printf("Pin9_12 ON!!\n");
-		gpio_set(GPIO_PIN_9_12, GPIO_STATE_ON);
-		printf("Readback Value: %d\n", gpio_get_state(GPIO_PIN_9_12));
+		printf("Pin26 ON!!\n");
+		gpio_set(GPIO_PIN_26, GPIO_STATE_ON);
+		printf("Readback Value: %d\n", gpio_get_state(GPIO_PIN_26));
 		timer_delay(1000);
 	}
 	return 0;

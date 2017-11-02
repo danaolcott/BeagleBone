@@ -16,13 +16,19 @@
 
 ////////////////////////////////////////
 //gpio_init
-//set pin 26 off
+//set pin 9_12 off
 void gpio_init()
 {
 	gpio_set(GPIO_PIN_26, GPIO_STATE_OFF);
+	gpio_set(GPIO_PIN_27, GPIO_STATE_OFF);
 }
 
 
+//////////////////////////////////////////
+//Note: writing a 2 toggles the led and
+//either a 1 or 0 is actually written into
+//the kernel space buffer
+//
 void gpio_set(GPIOPin_t pin, GPIOState_t state)
 {
 	int fp;
@@ -34,14 +40,19 @@ void gpio_set(GPIOPin_t pin, GPIOState_t state)
 		buff[0] = '0';
 	else if (state == GPIO_STATE_ON)
 		buff[0] = '1';
+	else if (state == GPIO_STATE_TOGGLE)
+		buff[0] = '2';
 
 	switch(pin)
 	{
 		case GPIO_PIN_26:
-			gpioPath = GPIO_PATH_PIN_26;
+			gpioPath = GPIO_26_PATH;
+			break;
+		case GPIO_PIN_27:
+			gpioPath = GPIO_27_PATH;
 			break;
 		default:
-			gpioPath = GPIO_PATH_PIN_26;
+			gpioPath = GPIO_26_PATH;
 			break;
 	}
 
@@ -66,10 +77,13 @@ GPIOState_t gpio_get_state(GPIOPin_t pin)
 	switch(pin)
 	{
 		case GPIO_PIN_26:
-			gpioPath = GPIO_PATH_PIN_26;
+			gpioPath = GPIO_26_PATH;
+			break;
+		case GPIO_PIN_27:
+			gpioPath = GPIO_27_PATH;
 			break;
 		default:
-			gpioPath = GPIO_PATH_PIN_26;
+			gpioPath = GPIO_26_PATH;
 			break;
 	}
 
