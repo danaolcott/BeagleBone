@@ -32,16 +32,19 @@
 #include "crhook.h"				//tick hook
 #include "priorities.h"			//task priorities
 
+////////////////////////
+
 //hardware level
 #include "gpio_driver.h"	//pin26 and pin27 - read/write to /dev/pin26 / 27
 #include "led_driver.h"		//pin26 and pin27 - read/write to /dev/pin26 / 27
 #include "eeprom_driver.h"	//eeprom ic, read/write to sys/kernel/eeprom
 #include "lcd_driver.h"		//lcd, read/write to sys/kernel/lcd
+#include "button_driver.h"
 
 //tasks
 #include "LedTask.h"
 #include "DisplayTask.h"
-
+#include "ButtonTask.h"
 
 
 #endif /* MAIN_H_ */

@@ -10,7 +10,6 @@
 #include "main.h"
 
 
-
 /* Just used to count the number of times the example task callback function is
 called, and the number of times a queue send passes. */
 //static unsigned long uxCheckTaskHookCallCount = 0;
@@ -25,11 +24,14 @@ int main( void )
 	led_init();			//ok, pins 26 and 27
 	eeprom_init();		//do nothing for now
 	lcd_init();
+	button_init();
 
 
 	//create the other tasks
 	LedTask_Init();			//led task
 	DisplayTask_Init();		//4bit display
+	ButtonTask_Init();		//button polling
+
 
 	/* Create the co-routines that communicate with the tick hook. */
 	vStartHookCoRoutines();

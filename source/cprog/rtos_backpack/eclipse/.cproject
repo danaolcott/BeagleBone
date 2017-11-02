@@ -44,7 +44,7 @@
 								<option id="gnu.cpp.compiler.option.debugging.level.2018270678" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1075655039" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker">
-								<option id="gnu.c.link.option.ldflags.302332236" superClass="gnu.c.link.option.ldflags" value="-pthread" valueType="string"/>
+								<option id="gnu.c.link.option.ldflags.302332236" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-pthread" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.2101428431" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -91,6 +91,8 @@
 									<listOptionValue builtIn="false" value="../../../FreeRTOS/FreeRTOS_Kernel/portable/GCC/Posix"/>
 									<listOptionValue builtIn="false" value="../../Hardware"/>
 									<listOptionValue builtIn="false" value=".././"/>
+									<listOptionValue builtIn="false" value="../../../../../../glib"/>
+									<listOptionValue builtIn="false" value="../../../../../../glib/glib/."/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1938351948" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GCC_POSIX__=1"/>
