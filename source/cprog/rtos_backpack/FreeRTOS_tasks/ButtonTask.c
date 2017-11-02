@@ -15,6 +15,8 @@ up to here, but having a hard time with it
 #include "ButtonTask.h"		//task level
 #include "button_driver.h"	//hardware level
 
+#include "lcd_driver.h"
+
 /////////////////////////////////////////////////
 //task and handle defs
 static void ButtonTask(void *pvParameters);
@@ -45,6 +47,7 @@ void ButtonTask_Init()
 //////////////////////////////////////////////////////
 //ButtonTask
 //Poll Button States
+//Trigger on falling
 //
 void ButtonTask(void *pvParameters)
 {
@@ -56,25 +59,40 @@ void ButtonTask(void *pvParameters)
 
         //read left
         buttonValue = button_read(BUTTON_TYPE_LEFT);
-        if (buttonValue)
+        if (!buttonValue)
         {
             //do something
+        	printf("Button Left Pressed\n");
+        	lcd_writeLine(2, "Left Button");
+        	vTaskDelay(200);
+        	lcd_writeLine(2, "_____________________");
+
         }
 
         buttonValue = button_read(BUTTON_TYPE_CENTER);
-        if (buttonValue)
+        if (!buttonValue)
         {
             //do something
+        	printf("Button Center Pressed\n");
+        	lcd_writeLine(2, "Center Button");
+        	vTaskDelay(200);
+        	lcd_writeLine(2, "_____________________");
+
+
         }
 
         buttonValue = button_read(BUTTON_TYPE_RIGHT);
-        if (buttonValue)
+        if (!buttonValue)
         {
             //do something
+        	printf("Button Right Pressed\n");
+        	lcd_writeLine(2, "Right Button");
+        	vTaskDelay(200);
+        	lcd_writeLine(2, "_____________________");
+
         }
 
-
-    	vTaskDelay(200);
+    	vTaskDelay(100);
     }
 
     //clean exit

@@ -9,6 +9,8 @@ button_driver.h
 #ifndef BUTTON_DRIVER_H
 #define BUTTON_DRIVER_H
 
+#include <stdint.h>
+
 #define BUTTON_PATH_LEFT	((char*)"/sys/class/gpio/gpio112/value");
 #define BUTTON_PATH_CENTER	((char*)"/sys/class/gpio/gpio115/value");
 #define BUTTON_PATH_RIGHT	((char*)"/sys/class/gpio/gpio61/value");

@@ -14,7 +14,12 @@ GPIO61 - button right
 */
 
 #include <stdio.h>
-#include <fcntl.h>		//open, close, read, write O_RDWR
+#include <stdint.h>		//uint8_t
+#include <stdlib.h>		//aoti
+
+#include <fcntl.h>		//O_RDWR
+#include <unistd.h>		//open, close, read, write... etc
+
 #include <string.h>
 #include "button_driver.h"
 
