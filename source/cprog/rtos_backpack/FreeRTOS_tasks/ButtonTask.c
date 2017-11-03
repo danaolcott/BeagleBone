@@ -60,6 +60,7 @@ void ButtonTask(void *pvParameters)
     for(;;)
     {
 
+    	/*
         //read left
         buttonValue = button_read(BUTTON_TYPE_LEFT);
         if (!buttonValue)
@@ -77,6 +78,10 @@ void ButtonTask(void *pvParameters)
         	//post message to queue with no waiting
         	xQueueSend(DisplayQueue, &msg, portMAX_DELAY);
         }
+
+*/
+
+
 
         buttonValue = button_read(BUTTON_TYPE_CENTER);
         if (!buttonValue)

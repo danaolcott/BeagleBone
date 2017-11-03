@@ -5,7 +5,7 @@ Dana Olcott
 Button LED init:
 Program that starts other programs, including:
 
-lkm/button3
+lkm/button2
 devices/pin26
 devices/pin27
 
@@ -17,9 +17,16 @@ devices/pin27
 
 int main( int argc, char *argv[] )
 {
-	//buttons with interrupts
-    system("echo INSMOD: lkm button3");
-    system("insmod /home/debian/lkm/button3/button3.ko");
+	//buttons with interrupts - center and right
+    system("echo INSMOD: lkm button2");
+    system("insmod /home/debian/lkm/button2/button2.ko");
+    system("sleep 1s");
+
+    //configure the left button as input, falling edge
+    system("echo Configure buttonLeft");
+    system("echo 112 > /sys/class/gpio/export");
+    system("echo in > /sys/class/gpio/gpio112/direction");
+    system("echo falling > /sys/class/gpio/gpio112/edge");
     system("sleep 1s");
 
     //led driver pin26 - blue led

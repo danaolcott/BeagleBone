@@ -32,6 +32,8 @@ int main( void )
 	DisplayTask_Init();		//4bit display
 	ButtonTask_Init();		//button polling
 
+	ButtonLeftTask_Init();	//task that uses poll.h
+
 
 	/* Create the co-routines that communicate with the tick hook. */
 	vStartHookCoRoutines();

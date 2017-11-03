@@ -5,7 +5,7 @@ Dana Olcott
 Button LED deinit:
 Program that stops other programs, including:
 
-lkm/button3
+lkm/button2
 devices/pin26
 devices/pin27
 
@@ -17,8 +17,8 @@ devices/pin27
 
 int main( int argc, char *argv[] )
 {
-    system("echo RMMOD: lkm button3");
-    system("rmmod button3");
+    system("echo RMMOD: lkm button2");
+    system("rmmod button2");
     system("sleep 1s");
 
     system("echo RMMOD: pin26");

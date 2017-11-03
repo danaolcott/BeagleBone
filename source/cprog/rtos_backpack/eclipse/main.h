@@ -46,5 +46,7 @@
 #include "DisplayTask.h"
 #include "ButtonTask.h"
 
+#include "ButtonLeftTask.h"
+
 
 #endif /* MAIN_H_ */
