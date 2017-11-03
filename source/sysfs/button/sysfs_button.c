@@ -6,12 +6,15 @@ The purpose of this module is to utilize kobject and
 attributes to connect a button to an led.  The button
 is on an interrupt.  When the button is pressed the led
 toggles.  The led represents a toggle switch, identified
-by led state.  
+by led state.  Button interrupt is rising and falling so 
+we can track the button value.
+
 
 Attributes include:
 number of button presses
 switch state - ie, if the led is on or off
 irq - for access from userland.
+value - value of the button, readonly
 
 This module can be used with the beaglebone backpack
 layout files located in source/backpack.
@@ -47,6 +50,7 @@ static unsigned int ledState = 0;     //state 0 - off, 1 - on
 //Button
 static unsigned int buttonPin = 112;
 static unsigned int irq;
+static unsigned int buttonValue = 1;    //default to 1 from ext. pullup
 
 //function prototypes - button isr
 static irq_handler_t buttonHandler(unsigned int irq_number, void *dev_id, struct pt_regs *regs);
@@ -201,16 +205,35 @@ static struct kobj_attribute irq_attribute = __ATTR_RO(irq);
 
 
 
+/////////////////////////////////////////////
+//buttonValue - readonly
+static ssize_t buttonValue_show(struct kobject *kobj, struct kobj_attribute *attr,
+         char *buf)
+{
+   return sprintf(buf, "%d\n", buttonValue);
+}
+
+//read only macro, pass the name of the attribute
+//only, .... buttonValue
+//Even though the _show function is not passed into the
+//macro, it needs to be defined or you'll get an error
+//
+static struct kobj_attribute buttonValue_attribute = __ATTR_RO(buttonValue);
+
+
+
+
 ////////////////////////////////////////////
 //Attribute Group
 //An array of attribute pointers
 //one entry for each attribute + NULL
 //
 static struct attribute *attrs[] = {
-   &presses_attribute.attr,
-   &state_attribute.attr,
-   &irq_attribute.attr,
-   NULL,
+    &presses_attribute.attr,
+    &state_attribute.attr,
+    &irq_attribute.attr,
+    &buttonValue_attribute.attr,
+    NULL,
 };
 
 /*
@@ -254,9 +277,12 @@ static int __init sysfs_button_init(void)
     //connect the lin to the handler function, set the interrupt trigger source
     result = request_irq(irq,
                        (irq_handler_t)buttonHandler,
-                       IRQF_TRIGGER_FALLING,
+                       IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING,
                        "button_handler",
                        NULL);
+
+    buttonValue = 1;
+
 
     //////////////////////////////////////////////////
     //make the kobject with name "button" in the sys/kernel
@@ -298,29 +324,49 @@ static void __exit sysfs_button_exit(void)
 
 
 ////////////////////////////////////////////////////////////////
-//buttonHandler 
+//buttonHandler
+//ISR for button.
+//Triggered on a rising and falling so we can track the 
+//state of the buttonValue.
+//presses will only trigger on falling
 //Function Defintions
 static irq_handler_t buttonHandler(unsigned int irq_number, void *dev_id, struct pt_regs *regs)
 {
-   //print something
-   printk(KERN_EMERG "Button Handler!!\n");
+    unsigned int temp = gpio_get_value(buttonPin);
 
-   //increment the number of button presses
-   presses++;
+    //falling
+    if (!temp)
+    {
+        //print something
+        printk(KERN_EMERG "Button Handler!!\n");
 
-   //state and ledState are redundant
-   if (!ledState)
-   {
-      ledState = 1;
-      state = 1;          //file variable
-   }
-   else
-   {
-      ledState = 0;
-      state = 0;
-   }
+        //increment the number of button presses
+        presses++;
 
-    gpio_set_value(ledPin, ledState);
+        buttonValue = 0;
+
+        //state and ledState are redundant
+        if (!ledState)
+        {
+            ledState = 1;
+            state = 1;          //file variable
+        }
+        else
+        {
+            ledState = 0;
+            state = 0;
+        }
+
+        gpio_set_value(ledPin, ledState);      
+    }
+
+    //rising
+    else
+    {
+        buttonValue = 1;
+    }
+
+
 
     return (irq_handler_t) IRQ_HANDLED;            
 }

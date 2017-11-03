@@ -22,6 +22,13 @@ int main( int argc, char *argv[] )
     system("insmod /home/debian/lkm/button2/button2.ko");
     system("sleep 1s");
 
+    //use one or the other....
+
+    //button with interrupts - left button using buttonValue
+//    system("echo INSMOD: sysfs button");
+//    system("insmod /home/debian/sysfs/button/sysfs_button.ko");
+//    system("sleep 1s");
+
     //configure the left button as input, falling edge
     system("echo Configure buttonLeft");
     system("echo 112 > /sys/class/gpio/export");
