@@ -29,7 +29,6 @@ up to user space
 //task and handle defs
 static void ButtonLeftTask(void *pvParameters);
 
-
 //task handles
 xTaskHandle ButtonLeftTaskHandle = NULL;
 
