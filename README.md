@@ -1,6 +1,7 @@
 # BeagleBoneBlack
 This repository contains projects that explore kernel module and user space programming concepts.  See information below as well as Wiki page(s) for more information.
 
+![alt text](https://raw.githubusercontent.com/danaolcott/BeagleBone/master/source/photos/beagleboneblack_demo2.jpg)
 
 
 Hardware
