@@ -1,5 +1,5 @@
 # BeagleBoneBlack
-This repository contains projects that explore kernel module and user space programming concepts.  See information below as well as Wiki page(s) for more information.
+This repository contains projects that explore kernel module and user space programming concepts.  See information below as well as Wiki page(s) for more information.  Photo below shows BeagleBoneBlack Rev C with Backpack PCA.  Note bad soldering of throughhole parts.  I put the resistors in the wrong location and tried to remove them, it didn't work out too well.  The traces are widely space as are the components.  Lots more room on the board, especially if switch to surface mount parts.  The LCD is a 4bit LCD from EA Displays.  The display was selected so that the driver could be scratch built using a handfull of several GPIO pins.  The basic demo includes setting a write address and writing a value to EEPROM, reading the value back, and writing the readback value to the LCD.  Red and blue LEDs flash when user buttons are pressed. 
 
 ![alt text](https://raw.githubusercontent.com/danaolcott/BeagleBone/master/source/photos/beagleboneblack_demo2.jpg)
 
