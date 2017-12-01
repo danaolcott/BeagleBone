@@ -26,6 +26,7 @@
 								<option id="gnu.c.compiler.option.debugging.level.2132711393" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.903459792" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value=".././"/>
+									<listOptionValue builtIn="false" value="../../app"/>
 									<listOptionValue builtIn="false" value="../../FreeRTOS_tasks"/>
 									<listOptionValue builtIn="false" value="../../FreeRTOS_user"/>
 									<listOptionValue builtIn="false" value="../../../FreeRTOS/FreeRTOS_Kernel/include"/>
@@ -91,6 +92,7 @@
 									<listOptionValue builtIn="false" value="../../../FreeRTOS/FreeRTOS_Kernel/include"/>
 									<listOptionValue builtIn="false" value="../../../FreeRTOS/FreeRTOS_Kernel/portable/GCC/Posix"/>
 									<listOptionValue builtIn="false" value=".././"/>
+									<listOptionValue builtIn="false" value="../../app"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1616271674" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GCC_POSIX__=1"/>

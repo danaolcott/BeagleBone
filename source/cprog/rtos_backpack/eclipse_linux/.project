@@ -45,14 +45,9 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Hardware</locationURI>
 		</link>
 		<link>
-			<name>main.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/eclipse/main.c</locationURI>
-		</link>
-		<link>
-			<name>main.h</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/eclipse/main.h</locationURI>
+			<name>app</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/app</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
