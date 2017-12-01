@@ -44,5 +44,10 @@
 			<type>2</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Hardware</locationURI>
 		</link>
+		<link>
+			<name>main</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/main</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>
