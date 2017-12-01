@@ -25,11 +25,14 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.option.optimization.level.1434162765" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.552214915" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.475058292" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="../../app"/>
 									<listOptionValue builtIn="false" value="../../task"/>
 									<listOptionValue builtIn="false" value="../../timer"/>
 									<listOptionValue builtIn="false" value="../../user_leds"/>
 								</option>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1559006979" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1559006979" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="LINUX_SIM=1"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2049480137" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.635368232" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
@@ -81,6 +84,7 @@
 									<listOptionValue builtIn="false" value="../../timer"/>
 									<listOptionValue builtIn="false" value=".././user_leds"/>
 									<listOptionValue builtIn="false" value="../../user_leds"/>
+									<listOptionValue builtIn="false" value="../../app"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1146395553" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="LINUX_SIM=1"/>

@@ -77,6 +77,11 @@ void TaskFunction_Tx(void)
 
 	uint8_t index = Task_GetIndexFromName("rx");
 
+#ifdef LINUX_SIM
+	printf("TX TasK: index: %d, msg.sig: %d, msg.val: %d\n", index,
+			msg.signal, msg.value);
+#endif
+
 	//send 0-3 with toggle signal
 	Task_SendMessage(index, msg);
 
