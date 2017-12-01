@@ -8,7 +8,8 @@
  */
 
 #include <stdio.h>
-#include <fcntl.h>		//open, close, read, write O_RDWR
+#include <fcntl.h>		//O_RDWR
+#include <unistd.h>		//open, close, read, write O_RDWR
 #include <string.h>
 
 #include "gpio_driver.h"
