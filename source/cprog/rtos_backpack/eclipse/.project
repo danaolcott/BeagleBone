@@ -45,9 +45,9 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Hardware</locationURI>
 		</link>
 		<link>
-			<name>main</name>
+			<name>app</name>
 			<type>2</type>
-			<locationURI>PARENT-1-PROJECT_LOC/main</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/app</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
