@@ -18,21 +18,42 @@
 
 #include <string.h>
 
+#ifdef LINUX_SIM
+char* led0_path = "./led0";
+char* led1_path = "./led1";
+char* led2_path = "./led2";
+char* led3_path = "./led3";
+
+#else
 
 char* led0_path = "/sys/devices/platform/leds/leds/beaglebone:green:usr0/brightness";
 char* led1_path = "/sys/devices/platform/leds/leds/beaglebone:green:usr1/brightness";
 char* led2_path = "/sys/devices/platform/leds/leds/beaglebone:green:usr2/brightness";
 char* led3_path = "/sys/devices/platform/leds/leds/beaglebone:green:usr3/brightness";
 
+#endif
+
 
 
 ////////////////////////////////////////
 //led_init
-//set all leds off
-//
-//also set the trigger to none...
+//inits the user leds on the BBB.  set all
+//triggers to none and set initial states to
+//off.  if debug on the linux sim, ignore the
+//trigger, make a file for each led in the running
+//directory.
 void led_init()
 {
+#ifdef LINUX_SIM
+	system("touch led0 led1 led2 led3");
+
+	system("echo 0 > ./led0");
+	system("echo 0 > ./led1");
+	system("echo 0 > ./led2");
+	system("echo 0 > ./led3");
+
+#endif
+
 	led_set(LED_0, LED_STATE_OFF);
 	led_set(LED_1, LED_STATE_OFF);
 	led_set(LED_2, LED_STATE_OFF);
@@ -55,16 +76,16 @@ void led_set(LedType_t led, LedState_t state)
 	switch(led)
 	{
 		case LED_0:
-			ledPath = LED_0_PATH;
+			ledPath = led0_path;
 			break;
 		case LED_1:
-			ledPath = LED_1_PATH;
+			ledPath = led1_path;
 			break;
 		case LED_2:
-			ledPath = LED_2_PATH;
+			ledPath = led2_path;
 			break;
 		case LED_3:
-			ledPath = LED_3_PATH;
+			ledPath = led3_path;
 			break;
 	}
 
@@ -85,16 +106,16 @@ LedState_t led_get_state(LedType_t led)
 	switch(led)
 	{
 		case LED_0:
-			ledPath = LED_0_PATH;
+			ledPath = led0_path;
 			break;
 		case LED_1:
-			ledPath = LED_1_PATH;
+			ledPath = led1_path;
 			break;
 		case LED_2:
-			ledPath = LED_2_PATH;
+			ledPath = led2_path;
 			break;
 		case LED_3:
-			ledPath = LED_3_PATH;
+			ledPath = led3_path;
 			break;
 	}
 

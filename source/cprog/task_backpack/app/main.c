@@ -50,8 +50,8 @@ int main()
 	led_init();						//leds 0-3
 
 	//add the tasks
-	Task_AddTask(TASK_TX_NAME, TaskFunction_Tx, 500, 0);
-	Task_AddTask(TASK_RX_NAME, TaskFunction_Rx, 100, 1);
+	Task_AddTask(TASK_TX_NAME, TaskFunction_Tx, 1000, 0);
+	Task_AddTask(TASK_RX_NAME, TaskFunction_Rx, 200, 1);
 
 	//start the scheduler
 	Task_StartScheduler();
