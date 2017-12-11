@@ -8,12 +8,17 @@
 //
 //Aside from that, the module does not do anything
 //it is intended to be used with a device driver
-//file, the sysfs, other module-level program
+//file, ie, dev, or sysfs.  To use this lkm with the
+//driver file, add exported symbols in the make file and
+//in the .c file.  
+//
+//Make file (for ex assume module is my_lcd_consumer_module):
 //
 //	obj-m:=my_lcd_consumer_module.o
 //
 //	KBUILD_EXTRA_SYMBOLS+= /home/debian/lkm/lcd_interface/Module.symvers
 //
+//Consumer Module:
 //Make sure these are also declared as extern
 //in the consumer module.
 //
@@ -37,10 +42,11 @@
 //lcd_writeStringBytes(buf, length, line, offset)
 //lcd_setContrast()
 //
-//EA Displays
+//LCD Description and Pinout:
+//EA Displays: PN#:  EADOGM163LA
 //4bit parallel display
 //Data Lines: GPIO 66, 67, 68, 69
-//Control Lines: GPIO 44, 45, 46
+//Control Lines: GPIO 44, 45, 46, 47
 //
 //Equivalent Pins:
 //Data Lines:
