@@ -45,9 +45,9 @@ void TaskFunction_Rx(void);
 
 int main()
 {
-	//init the timer
-	timer_init(TIMER_TYPE_REAL);	//timebase for task.c/.h
 	led_init();						//leds 0-3
+	timer_init(TIMER_TYPE_REAL);	//timebase for task.c/.h
+
 
 	//add the tasks
 	Task_AddTask(TASK_TX_NAME, TaskFunction_Tx, 1000, 0);

@@ -30,9 +30,7 @@
 									<listOptionValue builtIn="false" value="../../timer"/>
 									<listOptionValue builtIn="false" value="../../user_leds"/>
 								</option>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1559006979" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="LINUX_SIM=1"/>
-								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1559006979" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2049480137" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.635368232" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">

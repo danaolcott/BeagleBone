@@ -11,6 +11,7 @@
 
 
 #include "led_driver.h"
+#include <stdlib.h>
 
 #include <stdio.h>
 #include <fcntl.h>		//macro defintions
@@ -53,6 +54,14 @@ void led_init()
 	system("echo 0 > ./led3");
 
 #endif
+
+
+	//disable triggers on 4 user leds
+	system("echo none > /sys/class/leds/beaglebone:green:usr0/trigger");
+	system("echo none > /sys/class/leds/beaglebone:green:usr1/trigger");
+	system("echo none > /sys/class/leds/beaglebone:green:usr2/trigger");
+	system("echo none > /sys/class/leds/beaglebone:green:usr3/trigger");
+
 
 	led_set(LED_0, LED_STATE_OFF);
 	led_set(LED_1, LED_STATE_OFF);
